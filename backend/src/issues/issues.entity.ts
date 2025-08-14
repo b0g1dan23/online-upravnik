@@ -1,5 +1,5 @@
 import { Building } from "src/buildings/buildings.entity";
-import { Employee } from "src/employees/employees.entity";
+import type { Employee } from "src/employees/employees.entity";
 import { Notification } from "src/notifications/notifications.entity";
 import { User } from "src/users/users.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -28,11 +28,11 @@ export class Issue {
     @JoinColumn({ name: 'userId' })
     user: User;
 
-    @ManyToOne(() => Building, building => building.issues)
+    @ManyToOne(() => Building, (building: Building) => building.issues)
     @JoinColumn({ name: 'buildingId' })
     building: Building;
 
-    @ManyToOne(() => Employee, employee => employee.issuesAssigned)
+    @ManyToOne("Employee", (employee: Employee) => employee.issuesAssigned)
     @JoinColumn({ name: 'employeeResponsibleId' })
     employeeResponsible: Employee;
 
@@ -61,7 +61,7 @@ export class IssueStatus {
     @JoinColumn({ name: 'issueId' })
     issue: Issue;
 
-    @ManyToOne(() => Employee, { nullable: true })
+    @ManyToOne("Employee", { nullable: true })
     @JoinColumn({ name: 'changedByEmployeeId' })
     changedBy?: Employee;
 

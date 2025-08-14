@@ -8,6 +8,7 @@ import { EmployeesModule } from './employees/employees.module';
 import { IssuesModule } from './issues/issues.module';
 import { BuildingsModule } from './buildings/buildings.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [ConfigModule.forRoot(), TypeOrmModule.forRoot({
@@ -20,7 +21,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     autoLoadEntities: true,
     synchronize: true,
-  }), UsersModule, EmployeesModule, IssuesModule, BuildingsModule, NotificationsModule],
+  }), UsersModule, EmployeesModule, IssuesModule, BuildingsModule, NotificationsModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })

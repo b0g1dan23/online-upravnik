@@ -1,10 +1,15 @@
 import { Building } from "src/buildings/buildings.entity";
 import { Issue } from "src/issues/issues.entity";
-import { User } from "src/users/users.entity"
+import { User, UserRoleEnum } from "src/users/users.entity"
 import { Column, Entity, OneToMany } from "typeorm";
 
 @Entity()
 export class Employee extends User {
+    constructor() {
+        super();
+        this.role = UserRoleEnum.EMPLOYEE;
+    }
+
     @Column()
     position: string;
 

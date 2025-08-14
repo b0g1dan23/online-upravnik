@@ -1,4 +1,4 @@
-import { Employee } from "src/employees/employees.entity";
+import type { Employee } from "src/employees/employees.entity";
 import { Issue } from "src/issues/issues.entity";
 import { User } from "src/users/users.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -17,12 +17,12 @@ export class Building {
     @OneToMany(() => Issue, issue => issue.building)
     issues: Issue[];
 
-    @OneToMany(() => User, user => user.buildingLivingIn, { eager: true })
+    @OneToMany(() => User, (user) => user.buildingLivingIn, { eager: true })
     residents: User[];
 
-    @ManyToOne(() => Employee, (employee) => employee.buildings, { eager: true })
+    @ManyToOne("Employee", (employee: Employee) => employee.buildings, { eager: true })
     @JoinColumn({ name: 'employeeResponsibleId' })
-    employeeResponsible: Employee
+    employeeResponsible: Employee;
 
     @Column({ default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
