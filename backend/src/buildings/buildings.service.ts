@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBuildingDTO } from './DTOs/create-building.dto';
 import { EmployeesService } from 'src/employees/employees.service';
-import { ViewBuildingDTO } from './DTOs/view-building.dto';
+import { ViewBuildingBaseDTO, ViewBuildingDTO } from './DTOs/view-building.dto';
 
 @Injectable()
 export class BuildingsService {
@@ -37,5 +37,17 @@ export class BuildingsService {
             throw new NotFoundException('Building not found');
         }
         return building;
+    }
+
+    async listAllBuildingsShorthand() {
+        const buildings = await this.buildingsRepository.find({
+            select: {
+                id: true,
+                address: true,
+                name: true,
+            }
+        });
+
+        return buildings.map(building => new ViewBuildingBaseDTO(building));
     }
 }

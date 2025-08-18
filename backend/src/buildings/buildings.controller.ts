@@ -15,4 +15,9 @@ export class BuildingsController {
     findBuildings() {
         return this.buildingsService.findBuildings();
     }
+
+    @Get('/list')
+    listBuildings() {
+        return this.buildingsService.listAllBuildingsShorthand();
+    }
 }
