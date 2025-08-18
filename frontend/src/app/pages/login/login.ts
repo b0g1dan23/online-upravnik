@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
 import { AuthService, LoginDto, UserRoleEnum } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -115,8 +116,8 @@ export class Login implements OnInit, OnDestroy {
 
       this.authService.login(loginData).subscribe({
         next: response => {
-          this.authService.setToken(response.accessToken);
           const role = this.authService.getRole();
+          console.log(role)
           if (role === null) {
             this.authService.logout();
             this.router.navigate(['/login']);
@@ -136,11 +137,10 @@ export class Login implements OnInit, OnDestroy {
           }
           this.snackBar.open("Uspesna prijava!");
         },
-        error: err => {
-          console.log(err);
+        error: (err: HttpErrorResponse) => {
           this.authService.logout();
           this.router.navigate(['/login']);
-          this.snackBar.open("Greška prilikom prijave!");
+          this.snackBar.open(err.error.message);
         }
       })
 

@@ -37,10 +37,10 @@ export class AuthService {
   }
 
   login(dto: LoginDto) {
-    return this.http.post<{ accessToken: string }>(`${this.authURL}/login`, dto)
+    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto)
       .pipe(
         tap(response => {
-          localStorage.setItem('accessToken', response.accessToken);
+          localStorage.setItem('accessToken', response.access_token);
         })
       )
   }
