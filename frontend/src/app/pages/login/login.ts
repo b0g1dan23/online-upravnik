@@ -1,15 +1,18 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap, of } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap } from 'rxjs';
 import { Card } from '../../components/ui/card/card';
 import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
+import { AuthService, LoginDto, UserRoleEnum } from '../../services/auth';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-login',
   imports: [CommonModule, ReactiveFormsModule, Card, Input, Button],
+  standalone: true,
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })
@@ -18,14 +21,15 @@ export class Login implements OnInit, OnDestroy {
 
   isRegisterMode = false;
 
-  // Reactive Forms
   loginForm!: FormGroup;
   registerForm!: FormGroup;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -40,13 +44,11 @@ export class Login implements OnInit, OnDestroy {
   }
 
   private initializeForms(): void {
-    // Login forma
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
-    // Register forma
     this.registerForm = this.fb.group({
       ime: ['', [Validators.required, Validators.minLength(2)]],
       prezime: ['', [Validators.required, Validators.minLength(2)]],
@@ -68,7 +70,6 @@ export class Login implements OnInit, OnDestroy {
   }
 
   private setupFormValueChanges(): void {
-    // Login form changes
     this.loginForm.valueChanges
       .pipe(
         takeUntil(this.destroy$),
@@ -78,7 +79,6 @@ export class Login implements OnInit, OnDestroy {
       )
       .subscribe();
 
-    // Register form changes
     this.registerForm.valueChanges
       .pipe(
         takeUntil(this.destroy$),
@@ -110,20 +110,47 @@ export class Login implements OnInit, OnDestroy {
 
   onLoginSubmit(): void {
     if (this.loginForm.valid) {
-      const loginData = this.loginForm.value;
+      const loginData: LoginDto = this.loginForm.value;
       console.log('🚀 Šaljem login podatke na backend:', loginData);
 
-      // Ovde poziveš svoj service za login
-      // this.authService.login(loginData).subscribe(...)
+      this.authService.login(loginData).subscribe({
+        next: response => {
+          this.authService.setToken(response.accessToken);
+          const role = this.authService.getRole();
+          if (role === null) {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }
+          switch (role) {
+            case UserRoleEnum.TENANT:
+              this.router.navigate(['/tenant']);
+              break;
+            case UserRoleEnum.MANAGER:
+              this.router.navigate(['/manager']);
+              break;
+            case UserRoleEnum.EMPLOYEE:
+              this.router.navigate(['/employee']);
+              break;
+            default:
+              this.router.navigate(['/login']);
+          }
+          this.snackBar.open("Uspesna prijava!");
+        },
+        error: err => {
+          console.log(err);
+          this.authService.logout();
+          this.router.navigate(['/login']);
+          this.snackBar.open("Greška prilikom prijave!");
+        }
+      })
 
-      // Simulacija backend poziva
-      of(loginData)
-        .pipe(
-          debounceTime(1000), // simulacija network delay
-          tap(data => console.log('✅ Uspešan login:', data)),
-          takeUntil(this.destroy$)
-        )
-        .subscribe();
+      // of(loginData)
+      //   .pipe(
+      //     debounceTime(1000), // simulacija network delay
+      //     tap(data => console.log('✅ Uspešan login:', data)),
+      //     takeUntil(this.destroy$)
+      //   )
+      //   .subscribe();
     } else {
       console.log('❌ Login forma nije validna');
       this.markFormGroupTouched(this.loginForm);
@@ -133,26 +160,21 @@ export class Login implements OnInit, OnDestroy {
   onRegisterSubmit(): void {
     if (this.registerForm.valid) {
       const registerData = this.registerForm.value;
-      // Uklanjamo confirmPassword pre slanja
       const { confirmPassword, ...dataToSend } = registerData;
 
       console.log('🚀 Šaljem register podatke na backend:', dataToSend);
 
-      // Ovde poziveš svoj service za registraciju
-      // this.authService.register(dataToSend).subscribe(...)
-
-      // Simulacija backend poziva
-      of(dataToSend)
-        .pipe(
-          debounceTime(1000), // simulacija network delay
-          tap(data => console.log('✅ Uspešna registracija:', data)),
-          switchMap(() => {
-            // Nakon uspešne registracije, prebaci na login
-            return of(this.switchToLogin());
-          }),
-          takeUntil(this.destroy$)
-        )
-        .subscribe();
+      // of(dataToSend)
+      //   .pipe(
+      //     debounceTime(1000), // simulacija network delay
+      //     tap(data => console.log('✅ Uspešna registracija:', data)),
+      //     switchMap(() => {
+      //       // Nakon uspešne registracije, prebaci na login
+      //       return of(this.switchToLogin());
+      //     }),
+      //     takeUntil(this.destroy$)
+      //   )
+      //   .subscribe();
     } else {
       console.log('❌ Register forma nije validna');
       this.markFormGroupTouched(this.registerForm);
