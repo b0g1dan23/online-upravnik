@@ -37,7 +37,7 @@ export class ViewBuildingDTO extends ViewBuildingBaseDTO {
     constructor(building: Building) {
         super(building);
         this.employeeResponsible = new ViewEmployeeDTO(building.employeeResponsible);
-        this.residents = building.residents.map(resident => new ViewUserBaseDTO(resident));
-        this.issues = building.issues.map(issue => new ViewIssueDTO(issue));
+        this.residents = building.residents?.length > 0 ? building.residents.map(resident => new ViewUserBaseDTO(resident)) : [];
+        this.issues = building.issues?.length > 0 ? building.issues.map(issue => new ViewIssueDTO(issue)) : [];
     }
 }

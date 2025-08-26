@@ -18,7 +18,6 @@ export class AuthService {
     }
 
     async login(data: { user: ViewUserBaseDTO }) {
-        console.log(data.user);
         const payload = { id: data.user.id, role: data.user.role };
         return {
             access_token: this.jwtService.sign(payload),

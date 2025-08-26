@@ -1,7 +1,8 @@
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PassportStrategy } from "@nestjs/passport";
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtUser } from "../interfaces/jwt-user.interface";
+import { UserRoleEnum } from "src/users/users.entity";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -18,6 +19,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     validate(payload: any): JwtUser {
+        if (!payload.id || !payload.role) {
+            throw new UnauthorizedException('Invalid JWT payload: missing required fields');
+        }
+
+        if (!Object.values(UserRoleEnum).includes(payload.role)) {
+            throw new UnauthorizedException('Invalid user role');
+        }
+
         return { id: payload.id, role: payload.role };
     }
 }

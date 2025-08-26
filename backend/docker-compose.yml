@@ -26,6 +26,8 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
     env_file:
       - .env
     networks:

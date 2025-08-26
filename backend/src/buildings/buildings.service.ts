@@ -17,7 +17,8 @@ export class BuildingsService {
     async createBuilding(buildingData: CreateBuildingDTO) {
         const building = this.buildingsRepository.create(buildingData);
         building.employeeResponsible = await this.employeesService.findEmployeeById(buildingData.employeeResponsibleId);
-        return this.buildingsRepository.save(building);
+        const insertedBuilding = await this.buildingsRepository.save(building);
+        return new ViewBuildingDTO(insertedBuilding);
     }
 
     async findBuildings() {
@@ -28,7 +29,7 @@ export class BuildingsService {
                 issues: true
             }
         });
-        return buildings.map(building => new ViewBuildingDTO(building));
+        return buildings;
     }
 
     async findBuildingByID(id: string) {
@@ -49,5 +50,19 @@ export class BuildingsService {
         });
 
         return buildings.map(building => new ViewBuildingBaseDTO(building));
+    }
+
+    async removeBuilding(id: string) {
+        const building = await this.findBuildingByID(id);
+        await this.buildingsRepository.remove(building);
+        return { message: "Building removed successfully" };
+    }
+
+    async removeAllBuildings() {
+        const buildings = await this.findBuildings();
+        buildings.forEach(async (building) => {
+            await this.buildingsRepository.remove(building);
+        });
+        return { message: "All buildings removed successfully" };
     }
 }
