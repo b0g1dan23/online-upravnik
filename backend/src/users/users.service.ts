@@ -35,4 +35,13 @@ export class UsersService {
             throw new NotFoundException("User with that email not found!");
         return user;
     }
+
+    async findAllUsers() {
+        const users = await this.userRepository.find({
+            relations: {
+                buildingLivingIn: true
+            }
+        });
+        return users.map(user => new ViewUserBaseDTO(user));
+    }
 }
