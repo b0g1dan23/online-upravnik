@@ -4,6 +4,7 @@ import argon from 'argon2';
 import { ViewUserBaseDTO } from 'src/users/DTOs/view-user-base.dto';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDTO } from 'src/users/DTOs/create-user.dto';
+import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,11 @@ export class AuthService {
     }
 
     async register(createUserDto: CreateUserDTO) {
-        return this.usersService.createUser(createUserDto);
+        const registeredUser = await this.usersService.createUser(createUserDto);
+        const payload = { id: registeredUser.id, role: registeredUser.role };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: registeredUser
+        }
     }
 }
