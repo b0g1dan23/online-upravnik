@@ -34,6 +34,23 @@ services:
       - db
     depends_on:
       - db
+  seed:
+    build: .
+    command: npm run seed
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    env_file:
+      - .env
+    networks:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: "no"
 
 networks:
   db:
