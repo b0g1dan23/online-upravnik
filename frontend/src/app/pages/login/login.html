@@ -1,97 +1,168 @@
-<div class="h-[100vh] w-full grid items-center justify-center ">
-    <app-card class="w-[500px]">
-        <!-- LOGIN MODE -->
-        @if (!isRegisterMode) {
-        <div>
-            <div class="!mb-4">
-                <h1>Dobrodošao nazad</h1>
-                <p class="text-neutral-500">Prijavi se na svoj nalog kako bi nastavio</p>
-            </div>
-            <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="grid gap-2">
-                <div class="grid">
-                    <label for="email">Email</label>
-                    <app-input type="email" id="email" formControlName="email"></app-input>
-                    @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
-                    <span class="text-red-500 text-sm">Email je obavezan i mora biti validan</span>
-                    }
-                </div>
-                <div class="grid">
-                    <label for="sifra">Lozinka</label>
-                    <app-input type="password" id="sifra" formControlName="password"></app-input>
-                    @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-                    <span class="text-red-500 text-sm">Lozinka mora imati najmanje 6 karaktera</span>
-                    }
-                </div>
-                <app-button type="submit" [disabled]="loginForm.invalid">Prijavi se</app-button>
-            </form>
-            <span class="text-sm text-neutral-400 text-center">Nemaš nalog?
-                <span (click)="switchToRegister()" class="text-orange-500 cursor-pointer hover:underline">Registruj
-                    se</span>
-            </span>
+<div class="h-[100vh] w-full grid items-center justify-center">
+  <app-card class="w-[500px]">
+    <!-- LOGIN MODE -->
+    @if (!isRegisterMode) {
+    <div>
+      <div class="!mb-4">
+        <h1>Dobrodošao nazad</h1>
+        <p class="text-neutral-500">
+          Prijavi se na svoj nalog kako bi nastavio
+        </p>
+      </div>
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onLoginSubmit()"
+        class="grid gap-2"
+      >
+        <div class="grid">
+          <label for="email">Email</label>
+          <app-input
+            type="email"
+            id="email"
+            formControlName="email"
+          ></app-input>
+          @if (loginForm.get('email')?.invalid &&
+          loginForm.get('email')?.touched) {
+          <span class="text-red-500 text-sm"
+            >Email je obavezan i mora biti validan</span
+          >
+          }
         </div>
-        }
-        @else {
-        <div>
-            <div class="!mb-4">
-                <h1>Kreiraj nalog</h1>
-                <p class="text-neutral-500">Registruj se kako bi počeo da koristiš aplikaciju</p>
-            </div>
-            <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="grid gap-2">
-                <div class="flex gap-2">
-                    <div class="grid">
-                        <label for="reg-ime">Ime</label>
-                        <app-input type="text" id="reg-ime" placeholder="Unesite ime" formControlName="ime"></app-input>
-                        @if (registerForm.get('ime')?.invalid && registerForm.get('ime')?.touched) {
-                        <span class="text-red-500 text-sm">Ime je obavezno</span>
-                        }
-                    </div>
-                    <div class="grid">
-                        <label for="reg-prezime">Prezime</label>
-                        <app-input type="text" id="reg-prezime" placeholder="Unesite prezime"
-                            formControlName="prezime"></app-input>
-                        @if (registerForm.get('prezime')?.invalid && registerForm.get('prezime')?.touched) {
-                        <span class="text-red-500 text-sm">Prezime je obavezno</span>
-                        }
-                    </div>
-                </div>
-                <div class="grid">
-                    <label for="reg-email">Email</label>
-                    <app-input type="email" id="reg-email" placeholder="Unesite email"
-                        formControlName="email"></app-input>
-                    @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
-                    <span class="text-red-500 text-sm">Email je obavezan i mora biti validan</span>
-                    }
-                </div>
-                <div class="grid">
-                    <label for="reg-telefon">Broj telefona</label>
-                    <app-input type="tel" id="reg-telefon" placeholder="Unesite broj telefona"
-                        formControlName="telefon"></app-input>
-                    @if (registerForm.get('telefon')?.invalid && registerForm.get('telefon')?.touched) {
-                    <span class="text-red-500 text-sm">Broj telefona je obavezan</span>
-                    }
-                </div>
-                <div class="grid">
-                    <label for="reg-sifra">Lozinka</label>
-                    <app-input type="password" id="reg-sifra" placeholder="Unesite lozinku"
-                        formControlName="password"></app-input>
-                    @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-                    <span class="text-red-500 text-sm">Lozinka mora imati najmanje 8 karaktera</span>
-                    }
-                </div>
-                <div class="grid">
-                    <label for="confirm-sifra">Potvrdi lozinku</label>
-                    <app-input type="password" id="confirm-sifra" placeholder="Potvrdite lozinku"
-                        formControlName="confirmPassword"></app-input>
-                    @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
-                    <span class="text-red-500 text-sm">Lozinke se ne poklapaju</span>
-                    }
-                </div>
-                <app-button type="submit">Registruj se</app-button>
-            </form>
-            <span class="text-sm text-neutral-400 text-center">Već imaš nalog?
-                <span (click)="switchToLogin()" class="text-orange-500 cursor-pointer hover:underline">Prijavi se</span>
-            </span>
+        <div class="grid">
+          <label for="sifra">Lozinka</label>
+          <app-input
+            type="password"
+            id="sifra"
+            formControlName="password"
+          ></app-input>
+          @if (loginForm.get('password')?.invalid &&
+          loginForm.get('password')?.touched) {
+          <span class="text-red-500 text-sm"
+            >Lozinka mora imati najmanje 6 karaktera</span
+          >
+          }
         </div>
-        }
-    </app-card>
+        <app-button type="submit" [disabled]="loginForm.invalid"
+          >Prijavi se</app-button
+        >
+      </form>
+      <span class="text-sm text-neutral-400 text-center"
+        >Nemaš nalog?
+        <span
+          (click)="switchToRegister()"
+          class="text-orange-500 cursor-pointer hover:underline"
+          >Registruj se</span
+        >
+      </span>
+    </div>
+    } @else {
+    <div>
+      <div class="!mb-4">
+        <h1>Kreiraj nalog</h1>
+        <p class="text-neutral-500">
+          Registruj se kako bi počeo da koristiš aplikaciju
+        </p>
+      </div>
+      <form
+        [formGroup]="registerForm"
+        (ngSubmit)="onRegisterSubmit()"
+        class="grid gap-2"
+      >
+        <div class="flex gap-2">
+          <div class="grid">
+            <label for="reg-ime">Ime</label>
+            <app-input
+              type="text"
+              id="reg-ime"
+              placeholder="Unesite ime"
+              formControlName="firstName"
+            ></app-input>
+            @if (registerForm.get('firstName')?.invalid &&
+            registerForm.get('firstName')?.touched) {
+            <span class="text-red-500 text-sm">Ime je obavezno</span>
+            }
+          </div>
+          <div class="grid">
+            <label for="reg-prezime">Prezime</label>
+            <app-input
+              type="text"
+              id="reg-prezime"
+              placeholder="Unesite prezime"
+              formControlName="lastName"
+            ></app-input>
+            @if (registerForm.get('lastName')?.invalid &&
+            registerForm.get('lastName')?.touched) {
+            <span class="text-red-500 text-sm">Prezime je obavezno</span>
+            }
+          </div>
+        </div>
+        <div class="grid">
+          <label for="reg-email">Email</label>
+          <app-input
+            type="email"
+            id="reg-email"
+            placeholder="Unesite email"
+            formControlName="email"
+          ></app-input>
+          @if (registerForm.get('email')?.invalid &&
+          registerForm.get('email')?.touched) {
+          <span class="text-red-500 text-sm"
+            >Email je obavezan i mora biti validan</span
+          >
+          }
+        </div>
+        <div class="grid">
+          <label for="reg-telefon">Broj telefona</label>
+          <app-input
+            type="tel"
+            id="reg-telefon"
+            placeholder="Unesite broj telefona"
+            formControlName="phoneNumber"
+          ></app-input>
+          @if (registerForm.get('phoneNumber')?.invalid &&
+          registerForm.get('phoneNumber')?.touched) {
+          <span class="text-red-500 text-sm">Broj telefona je obavezan</span>
+          }
+        </div>
+        <div class="grid">
+          <label for="reg-sifra">Lozinka</label>
+          <app-input
+            type="password"
+            id="reg-sifra"
+            placeholder="Unesite lozinku"
+            formControlName="password"
+          ></app-input>
+          @if (registerForm.get('password')?.invalid &&
+          registerForm.get('password')?.touched) {
+          <span class="text-red-500 text-sm"
+            >Lozinka mora imati najmanje 8 karaktera</span
+          >
+          }
+        </div>
+        <div class="grid">
+          <label for="confirm-sifra">Potvrdi lozinku</label>
+          <app-input
+            type="password"
+            id="confirm-sifra"
+            placeholder="Potvrdite lozinku"
+            formControlName="confirmPassword"
+          ></app-input>
+          @if (registerForm.get('confirmPassword')?.invalid &&
+          registerForm.get('confirmPassword')?.touched) {
+          <span class="text-red-500 text-sm">Lozinke se ne poklapaju</span>
+          }
+        </div>
+        <app-button type="submit">Registruj se</app-button>
+      </form>
+      <span class="text-sm text-neutral-400 text-center"
+        >Već imaš nalog?
+        <span
+          (click)="switchToLogin()"
+          class="text-orange-500 cursor-pointer hover:underline"
+          >Prijavi se</span
+        >
+      </span>
+    </div>
+    }
+  </app-card>
 </div>

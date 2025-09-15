@@ -1,10 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, switchMap, tap } from 'rxjs';
 import { jwtDecode } from 'jwt-decode'
 
 export interface LoginDto {
   email: string;
+  password: string;
+}
+
+export interface RegisterDto {
+  ime: string;
+  prezime: string;
+  email: string;
+  telefon: string;
   password: string;
 }
 
@@ -27,38 +35,12 @@ export class AuthService {
   private currentUserRoleSubject = new BehaviorSubject<UserRoleEnum | null>(null);
   public currentUserRole$ = this.currentUserRoleSubject.asObservable();
 
-  constructor(private http: HttpClient
-  ) {
-    this.loadUserFromToken();
-  }
-
-  private isBrowser(): boolean {
-    return typeof window !== 'undefined' && !!window.localStorage;
-  }
+  constructor(private http: HttpClient) { }
 
   login(dto: LoginDto) {
-    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto)
-      .pipe(
-        tap(response => {
-          localStorage.setItem('accessToken', response.access_token);
-        })
-      )
-  }
-
-  loadUserFromToken() {
-    if (!this.isBrowser()) return;
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const decoded = jwtDecode<JwtPayload>(token);
-      this.currentUserRoleSubject.next(decoded.role);
-    }
-  }
-
-  setToken(token: string) {
-    if (!this.isBrowser()) return;
-    localStorage.setItem('accessToken', token);
-    const decoded = jwtDecode<JwtPayload>(token);
-    this.currentUserRoleSubject.next(decoded.role);
+    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
+      withCredentials: true
+    })
   }
 
   getRole() {
@@ -70,8 +52,17 @@ export class AuthService {
   }
 
   logout() {
-    if (!this.isBrowser()) return;
-    localStorage.removeItem('accessToken');
-    this.currentUserRoleSubject.next(null);
+    return this.http.post(`${this.authURL}/logout`, {}, {
+      withCredentials: true
+    }).pipe(
+      tap(() => this.currentUserRoleSubject.next(null))
+    );
+  }
+
+  register(dto: RegisterDto) {
+    console.log(dto);
+    return this.http.post(`${this.authURL}/register`, dto, {
+      withCredentials: true
+    });
   }
 }
