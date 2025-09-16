@@ -4,7 +4,6 @@ import argon from 'argon2';
 import { ViewUserBaseDTO } from 'src/users/DTOs/view-user-base.dto';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDTO } from 'src/users/DTOs/create-user.dto';
-import { access } from 'fs';
 
 @Injectable()
 export class AuthService {

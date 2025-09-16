@@ -41,13 +41,7 @@ export class BuildingsService {
     }
 
     async listAllBuildingsShorthand() {
-        const buildings = await this.buildingsRepository.find({
-            select: {
-                id: true,
-                address: true,
-                name: true,
-            }
-        });
+        const buildings = await this.buildingsRepository.query(`SELECT id, address, name FROM building`);
 
         return buildings.map(building => new ViewBuildingBaseDTO(building));
     }
