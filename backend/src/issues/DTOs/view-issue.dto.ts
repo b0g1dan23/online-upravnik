@@ -1,14 +1,13 @@
 import { ViewUserBaseDTO } from "src/users/DTOs/view-user-base.dto";
 import { Issue, IssuePicture, IssuePictureType, IssueStatus, IssueStatusEnum } from "../issues.entity";
-import { ViewBuildingDTO } from "src/buildings/DTOs/view-building.dto";
 import { ViewEmployeeDTO } from "src/employees/DTOs/view-employee.dto";
 
 export class ViewIssueDTO {
     id: string;
     problemDescription: string;
-    user: ViewUserBaseDTO;
-    building: ViewBuildingDTO;
-    employeeResponsible: ViewEmployeeDTO;
+    userID: string;
+    buildingID: string;
+    employeeResponsibleID: string;
     statusHistory: IssueStatus[];
     pictures: IssuePicture[];
     notifications: Notification[];
@@ -17,9 +16,9 @@ export class ViewIssueDTO {
     constructor(issue: Issue) {
         this.id = issue.id;
         this.problemDescription = issue.problemDescription;
-        this.user = new ViewUserBaseDTO(issue.user);
-        this.building = new ViewBuildingDTO(issue.building);
-        this.employeeResponsible = new ViewEmployeeDTO(issue.employeeResponsible);
+        this.userID = issue.user?.id;
+        this.buildingID = issue.building?.id;
+        this.employeeResponsibleID = issue.employeeResponsible?.id;
     }
 }
 

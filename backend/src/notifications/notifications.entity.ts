@@ -1,6 +1,6 @@
 import { Issue } from "src/issues/issues.entity";
 import { User } from "src/users/users.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 export enum NotificationType {
     ISSUE_CREATED = 'ISSUE_CREATED',
