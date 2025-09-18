@@ -3,6 +3,7 @@ import { PassportStrategy } from "@nestjs/passport";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtUser } from "../interfaces/jwt-user.interface";
 import { UserRoleEnum } from "src/users/users.entity";
+import type { Request } from "express";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -12,7 +13,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new Error("JWT_SECRET environment variable is not set.");
         }
         super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: ExtractJwt.fromExtractors([(req: Request) => {
+                return req?.cookies?.access_token || null;
+            }]),
             ignoreExpiration: false,
             secretOrKey: jwtSecret,
         });
