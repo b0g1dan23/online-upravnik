@@ -46,36 +46,31 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.checkExistingAuth();
-  }
-
-  private checkExistingAuth() {
-    this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
-      withCredentials: true
-    }).subscribe({
-      next: user => this.currentUserSubject.next(user),
-      error: () => {
-        this.currentUserSubject.next(null);
-      }
-    });
+    this.refreshUserFromCookie();
   }
 
   login(dto: LoginDto) {
-    const result = this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
-      withCredentials: true
+    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
+      withCredentials: true,
+      observe: 'response'
     }).pipe(
-      tap(() => this.refreshUserFromCookie()))
-
-    console.log(result)
-    return result;
+      tap(() => {
+        this.refreshUserFromCookie();
+      }),
+      switchMap(response => [response.body!])
+    );
   }
 
   private refreshUserFromCookie() {
-    return this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
+    this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
       withCredentials: true
     }).subscribe({
-      next: user => this.currentUserSubject.next(user),
-      error: () => {
+      next: user => {
+        console.log('✅ User fetched from cookie:', user);
+        this.currentUserSubject.next(user);
+      },
+      error: (err) => {
+        console.log('❌ Failed to get user from cookie:', err.status, err.message);
         this.currentUserSubject.next(null);
       }
     });
