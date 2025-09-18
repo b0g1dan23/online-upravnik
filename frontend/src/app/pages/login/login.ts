@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,6 +9,13 @@ import { Button } from '../../components/ui/button/button';
 import { AuthService, LoginDto, UserRoleEnum } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
+import { BuildingsService } from '../../services/buildings';
+
+export type BuildingsShorthand = {
+  id: string;
+  name: string;
+  address: string;
+}
 
 @Component({
   selector: 'app-login',
@@ -19,6 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class Login implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  public buildings = signal<BuildingsShorthand[]>([]);
 
   isRegisterMode = false;
 
@@ -30,13 +38,24 @@ export class Login implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private buildingsService: BuildingsService
   ) { }
 
   ngOnInit(): void {
     this.initializeForms();
     this.setupQueryParamSubscription();
     this.setupFormValueChanges();
+    this.buildingsService.getBuildingsList()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (buildings) => {
+          this.buildings.set(buildings);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.snackBar.open(err.error.message);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -56,7 +75,8 @@ export class Login implements OnInit, OnDestroy {
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]+$/)]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', [Validators.required]]
+      confirmPassword: ['', [Validators.required]],
+      buildingLivingInID: ['', [Validators.required]]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -118,6 +138,7 @@ export class Login implements OnInit, OnDestroy {
         .subscribe({
           next: response => {
             const role = this.authService.getRole();
+            console.log(role);
             if (role === null) {
               this.authService.logout();
               this.router.navigate(['/login']);

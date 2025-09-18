@@ -152,6 +152,27 @@
           <span class="text-red-500 text-sm">Lozinke se ne poklapaju</span>
           }
         </div>
+        <div class="grid">
+          <label for="confirm-sifra">Zgrada u kojoj se nalazite</label>
+          <select
+            name="buildingLivingInID"
+            id="buildingLivingInID"
+            formControlName="buildingLivingInID"
+            class="border border-neutral-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="" disabled selected>Izaberite zgradu</option>
+            @for (building of buildings(); track building.id) {
+            <option [value]="building.id">
+              {{ building.name ? building.name + " - " : "" }}
+              {{ building.address }}
+            </option>
+            }
+          </select>
+          @if (registerForm.get('buildingLivingInID')?.invalid &&
+          registerForm.get('buildingLivingInID')?.touched) {
+          <span class="text-red-500 text-sm">Obavezno je izabrati zgradu</span>
+          }
+        </div>
         <app-button type="submit">Registruj se</app-button>
       </form>
       <span class="text-sm text-neutral-400 text-center"

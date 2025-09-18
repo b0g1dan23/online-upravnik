@@ -9,11 +9,12 @@ export interface LoginDto {
 }
 
 export interface RegisterDto {
-  ime: string;
-  prezime: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  telefon: string;
+  phoneNumber: string;
   password: string;
+  buildingLivingInID: string;
 }
 
 export enum UserRoleEnum {
@@ -27,40 +28,74 @@ export interface JwtPayload {
   role: UserRoleEnum;
 }
 
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  role: UserRoleEnum;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private authURL = `http://localhost:8080/auth`;
-  private currentUserRoleSubject = new BehaviorSubject<UserRoleEnum | null>(null);
-  public currentUserRole$ = this.currentUserRoleSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    this.checkExistingAuth();
+  }
+
+  private checkExistingAuth() {
+    this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
+      withCredentials: true
+    }).subscribe({
+      next: user => this.currentUserSubject.next(user),
+      error: () => {
+        this.currentUserSubject.next(null);
+      }
+    });
+  }
 
   login(dto: LoginDto) {
-    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
+    const result = this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
       withCredentials: true
-    })
+    }).pipe(
+      tap(() => this.refreshUserFromCookie()))
+
+    console.log(result)
+    return result;
+  }
+
+  private refreshUserFromCookie() {
+    return this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
+      withCredentials: true
+    }).subscribe({
+      next: user => this.currentUserSubject.next(user),
+      error: () => {
+        this.currentUserSubject.next(null);
+      }
+    });
   }
 
   getRole() {
-    return this.currentUserRoleSubject.value;
+    return this.currentUserSubject.value?.role ?? null;
   }
 
   hasRole(role: UserRoleEnum): boolean {
-    return this.currentUserRoleSubject.value === role;
+    return this.currentUserSubject.value?.role === role;
   }
 
   logout() {
     return this.http.post(`${this.authURL}/logout`, {}, {
       withCredentials: true
-    }).pipe(
-      tap(() => this.currentUserRoleSubject.next(null))
-    );
+    }).subscribe(() => this.currentUserSubject.next(null));
   }
 
   register(dto: RegisterDto) {
-    console.log(dto);
     return this.http.post(`${this.authURL}/register`, dto, {
       withCredentials: true
     });
