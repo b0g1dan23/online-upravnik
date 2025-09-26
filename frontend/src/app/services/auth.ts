@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, switchMap, tap } from 'rxjs';
-import { jwtDecode } from 'jwt-decode'
+import { BehaviorSubject, Observable, filter, map, of, switchMap, take, tap } from 'rxjs';
 
 export interface LoginDto {
   email: string;
@@ -23,11 +22,6 @@ export enum UserRoleEnum {
   EMPLOYEE = 'EMPLOYEE'
 }
 
-export interface JwtPayload {
-  id: string;
-  role: UserRoleEnum;
-}
-
 export interface User {
   id: string;
   firstName: string;
@@ -43,56 +37,79 @@ export interface User {
 export class AuthService {
   private authURL = `http://localhost:8080/auth`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  private isInitialized = new BehaviorSubject<boolean>(false);
+
+  public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.refreshUserFromCookie();
+    this.loadUserFromCookie();
   }
 
-  login(dto: LoginDto) {
-    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto, {
-      withCredentials: true,
-      observe: 'response'
+  login(dto: LoginDto): Observable<User> {
+    return this.http.post(`${this.authURL}/login`, dto, {
+      withCredentials: true
     }).pipe(
-      tap(() => {
-        this.refreshUserFromCookie();
-      }),
-      switchMap(response => [response.body!])
+      switchMap(() => this.fetchUserFromServer()),
+      tap(user => {
+        this.currentUserSubject.next(user);
+        this.isInitialized.next(true);
+      })
     );
   }
 
-  private refreshUserFromCookie() {
-    this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
+  register(dto: RegisterDto): Observable<User> {
+    return this.http.post(`${this.authURL}/register`, dto, {
       withCredentials: true
-    }).subscribe({
-      next: user => {
-        console.log('✅ User fetched from cookie:', user);
-        this.currentUserSubject.next(user);
-      },
-      error: (err) => {
-        console.log('❌ Failed to get user from cookie:', err.status, err.message);
-        this.currentUserSubject.next(null);
-      }
-    });
+    }).pipe(
+      switchMap(() => this.fetchUserFromServer())
+    );
+  }
+
+  getCurrentUser(): Observable<User | null> {
+    if (this.isInitialized.value) {
+      return of(this.currentUserSubject.value);
+    } else {
+      return this.isInitialized.pipe(
+        filter(initialized => initialized),
+        take(1),
+        map(() => this.currentUserSubject.value)
+      );
+    }
+  }
+
+  logout(): void {
+    this.http.post(`${this.authURL}/logout`, {}, { withCredentials: true })
+      .subscribe(() => this.currentUserSubject.next(null));
   }
 
   getRole() {
-    return this.currentUserSubject.value?.role ?? null;
+    return this.currentUser$.pipe(
+      map(user => user?.role ?? null)
+    );
   }
 
   hasRole(role: UserRoleEnum): boolean {
     return this.currentUserSubject.value?.role === role;
   }
 
-  logout() {
-    return this.http.post(`${this.authURL}/logout`, {}, {
-      withCredentials: true
-    }).subscribe(() => this.currentUserSubject.next(null));
+  private loadUserFromCookie(): void {
+    this.fetchUserFromServer().subscribe({
+      next: (user) => {
+        this.currentUserSubject.next(user);
+        this.isInitialized.next(true);
+      },
+      error: () => {
+        this.currentUserSubject.next(null);
+        this.isInitialized.next(true);
+      }
+    });
   }
 
-  register(dto: RegisterDto) {
-    return this.http.post(`${this.authURL}/register`, dto, {
+  private fetchUserFromServer(): Observable<User> {
+    return this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
       withCredentials: true
-    });
+    }).pipe(
+      tap(user => this.currentUserSubject.next(user))
+    );
   }
 }

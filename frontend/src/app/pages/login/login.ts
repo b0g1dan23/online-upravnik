@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
 import { Card } from '../../components/ui/card/card';
 import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
@@ -132,18 +132,17 @@ export class Login implements OnInit, OnDestroy {
       const loginData: LoginDto = this.loginForm.value;
 
       this.authService.login(loginData)
-        .pipe(tap(() => {
-          this.snackBar.open("Uspesna prijava!");
-        }))
+        .pipe(
+          tap(() => {
+            this.snackBar.open("Uspesna prijava!");
+          }),
+          takeUntil(this.destroy$)
+        )
         .subscribe({
-          next: response => {
-            const role = this.authService.getRole();
-            console.log(role);
-            if (role === null) {
-              this.authService.logout();
-              this.router.navigate(['/login']);
-            }
-            switch (role) {
+          next: user => {
+            console.log('Current role:', user.role);
+
+            switch (user.role) {
               case UserRoleEnum.TENANT:
                 this.router.navigate(['/tenant']);
                 break;
@@ -156,14 +155,12 @@ export class Login implements OnInit, OnDestroy {
               default:
                 this.router.navigate(['/login']);
             }
-
           },
           error: (err: HttpErrorResponse) => {
-            this.authService.logout();
             this.router.navigate(['/login']);
             this.snackBar.open(err.error.message);
           }
-        })
+        });
     } else {
       console.log('❌ Login forma nije validna');
       this.markFormGroupTouched(this.loginForm);
@@ -179,12 +176,11 @@ export class Login implements OnInit, OnDestroy {
         tap(() => {
           this.snackBar.open("Uspesna registracija!");
         }),
+        switchMap(() => this.authService.getRole()),
         takeUntil(this.destroy$)
       ).subscribe({
-        next: () => {
-          const role = this.authService.getRole();
+        next: (role) => {
           if (role === null) {
-            this.authService.logout();
             this.router.navigate(['/login']);
           }
           switch (role) {
@@ -202,7 +198,6 @@ export class Login implements OnInit, OnDestroy {
           }
         },
         error: (err: HttpErrorResponse) => {
-          this.authService.logout();
           this.router.navigate(['/login']);
           this.snackBar.open(err.error.message);
         }

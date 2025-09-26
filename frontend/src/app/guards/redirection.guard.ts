@@ -1,18 +1,33 @@
 import { Injectable } from "@angular/core";
 import { CanActivate, Router } from "@angular/router";
 import { AuthService, UserRoleEnum } from "../services/auth";
+import { Observable, map, take } from "rxjs";
 
 @Injectable({
     providedIn: 'root'
 })
 export class RedirectionGuard implements CanActivate {
-    constructor(private authService: AuthService,
-        private router: Router) { }
 
-    canActivate(): boolean {
-        const role = this.authService.getRole();
-        if (!role) return true;
+    constructor(
+        private authService: AuthService,
+        private router: Router
+    ) { }
 
+    canActivate(): Observable<boolean> {
+        return this.authService.getCurrentUser().pipe(
+            take(1),
+            map(user => {
+                if (!user) {
+                    return true;
+                }
+
+                this.redirectByRole(user.role);
+                return false;
+            })
+        );
+    }
+
+    private redirectByRole(role: UserRoleEnum): void {
         switch (role) {
             case UserRoleEnum.TENANT:
                 this.router.navigate(['/tenant']);
@@ -23,7 +38,8 @@ export class RedirectionGuard implements CanActivate {
             case UserRoleEnum.EMPLOYEE:
                 this.router.navigate(['/employee']);
                 break;
+            default:
+                this.router.navigate(['/homepage']);
         }
-        return false;
     }
 }
