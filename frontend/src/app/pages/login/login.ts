@@ -1,14 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
 import { Card } from '../../components/ui/card/card';
 import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
 import { AuthService, LoginDto, UserRoleEnum } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
+import { BuildingsService } from '../../services/buildings';
+
+export type BuildingsShorthand = {
+  id: string;
+  name: string;
+  address: string;
+}
 
 @Component({
   selector: 'app-login',
@@ -19,6 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class Login implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  public buildings = signal<BuildingsShorthand[]>([]);
 
   isRegisterMode = false;
 
@@ -30,13 +38,24 @@ export class Login implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private buildingsService: BuildingsService
   ) { }
 
   ngOnInit(): void {
     this.initializeForms();
     this.setupQueryParamSubscription();
     this.setupFormValueChanges();
+    this.buildingsService.getBuildingsList()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (buildings) => {
+          this.buildings.set(buildings);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.snackBar.open(err.error.message);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -51,12 +70,13 @@ export class Login implements OnInit, OnDestroy {
     });
 
     this.registerForm = this.fb.group({
-      ime: ['', [Validators.required, Validators.minLength(2)]],
-      prezime: ['', [Validators.required, Validators.minLength(2)]],
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      telefon: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]+$/)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]+$/)]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', [Validators.required]]
+      confirmPassword: ['', [Validators.required]],
+      buildingLivingInID: ['', [Validators.required]]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -76,7 +96,6 @@ export class Login implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
         debounceTime(300),
         distinctUntilChanged(),
-        tap(values => console.log('Login form values:', values))
       )
       .subscribe();
 
@@ -85,7 +104,6 @@ export class Login implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
         debounceTime(300),
         distinctUntilChanged(),
-        tap(values => console.log('Register form values:', values))
       )
       .subscribe();
   }
@@ -112,14 +130,57 @@ export class Login implements OnInit, OnDestroy {
   onLoginSubmit(): void {
     if (this.loginForm.valid) {
       const loginData: LoginDto = this.loginForm.value;
-      console.log('🚀 Šaljem login podatke na backend:', loginData);
 
-      this.authService.login(loginData).subscribe({
-        next: response => {
-          const role = this.authService.getRole();
-          console.log(role)
+      this.authService.login(loginData)
+        .pipe(
+          tap(() => {
+            this.snackBar.open("Uspesna prijava!");
+          }),
+          takeUntil(this.destroy$)
+        )
+        .subscribe({
+          next: user => {
+            console.log('Current role:', user.role);
+
+            switch (user.role) {
+              case UserRoleEnum.TENANT:
+                this.router.navigate(['/tenant']);
+                break;
+              case UserRoleEnum.MANAGER:
+                this.router.navigate(['/manager']);
+                break;
+              case UserRoleEnum.EMPLOYEE:
+                this.router.navigate(['/employee']);
+                break;
+              default:
+                this.router.navigate(['/login']);
+            }
+          },
+          error: (err: HttpErrorResponse) => {
+            this.router.navigate(['/login']);
+            this.snackBar.open(err.error.message);
+          }
+        });
+    } else {
+      console.log('❌ Login forma nije validna');
+      this.markFormGroupTouched(this.loginForm);
+    }
+  }
+
+  onRegisterSubmit(): void {
+    if (this.registerForm.valid) {
+      const registerData = this.registerForm.value;
+      const { confirmPassword, ...dataToSend } = registerData;
+
+      this.authService.register(dataToSend).pipe(
+        tap(() => {
+          this.snackBar.open("Uspesna registracija!");
+        }),
+        switchMap(() => this.authService.getRole()),
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (role) => {
           if (role === null) {
-            this.authService.logout();
             this.router.navigate(['/login']);
           }
           switch (role) {
@@ -135,46 +196,12 @@ export class Login implements OnInit, OnDestroy {
             default:
               this.router.navigate(['/login']);
           }
-          this.snackBar.open("Uspesna prijava!");
         },
         error: (err: HttpErrorResponse) => {
-          this.authService.logout();
           this.router.navigate(['/login']);
           this.snackBar.open(err.error.message);
         }
       })
-
-      // of(loginData)
-      //   .pipe(
-      //     debounceTime(1000), // simulacija network delay
-      //     tap(data => console.log('✅ Uspešan login:', data)),
-      //     takeUntil(this.destroy$)
-      //   )
-      //   .subscribe();
-    } else {
-      console.log('❌ Login forma nije validna');
-      this.markFormGroupTouched(this.loginForm);
-    }
-  }
-
-  onRegisterSubmit(): void {
-    if (this.registerForm.valid) {
-      const registerData = this.registerForm.value;
-      const { confirmPassword, ...dataToSend } = registerData;
-
-      console.log('🚀 Šaljem register podatke na backend:', dataToSend);
-
-      // of(dataToSend)
-      //   .pipe(
-      //     debounceTime(1000), // simulacija network delay
-      //     tap(data => console.log('✅ Uspešna registracija:', data)),
-      //     switchMap(() => {
-      //       // Nakon uspešne registracije, prebaci na login
-      //       return of(this.switchToLogin());
-      //     }),
-      //     takeUntil(this.destroy$)
-      //   )
-      //   .subscribe();
     } else {
       console.log('❌ Register forma nije validna');
       this.markFormGroupTouched(this.registerForm);

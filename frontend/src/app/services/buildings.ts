@@ -1,19 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { BuildingsShorthand } from '../pages/login/login';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BuildingsService {
-  private buildingsURL = `http://localhost:8080/buildings`;
+  private authURL = `http://localhost:8080/buildings`;
 
   constructor(private http: HttpClient) { }
 
-  getList() {
-    return this.http.get<{
-      id: string;
-      address: string;
-      name: string;
-    }[]>(`${this.buildingsURL}/list`);
+  getBuildingsList() {
+    return this.http.get<BuildingsShorthand[]>(`${this.authURL}/list`);
   }
 }

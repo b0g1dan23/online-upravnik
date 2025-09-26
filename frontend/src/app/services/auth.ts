@@ -1,11 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
-import { jwtDecode } from 'jwt-decode'
+import { BehaviorSubject, Observable, filter, map, of, switchMap, take, tap } from 'rxjs';
 
 export interface LoginDto {
   email: string;
   password: string;
+}
+
+export interface RegisterDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  buildingLivingInID: string;
 }
 
 export enum UserRoleEnum {
@@ -14,8 +22,12 @@ export enum UserRoleEnum {
   EMPLOYEE = 'EMPLOYEE'
 }
 
-export interface JwtPayload {
+export interface User {
   id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
   role: UserRoleEnum;
 }
 
@@ -24,54 +36,80 @@ export interface JwtPayload {
 })
 export class AuthService {
   private authURL = `http://localhost:8080/auth`;
-  private currentUserRoleSubject = new BehaviorSubject<UserRoleEnum | null>(null);
-  public currentUserRole$ = this.currentUserRoleSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private isInitialized = new BehaviorSubject<boolean>(false);
 
-  constructor(private http: HttpClient
-  ) {
-    this.loadUserFromToken();
+  public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    this.loadUserFromCookie();
   }
 
-  private isBrowser(): boolean {
-    return typeof window !== 'undefined' && !!window.localStorage;
+  login(dto: LoginDto): Observable<User> {
+    return this.http.post(`${this.authURL}/login`, dto, {
+      withCredentials: true
+    }).pipe(
+      switchMap(() => this.fetchUserFromServer()),
+      tap(user => {
+        this.currentUserSubject.next(user);
+        this.isInitialized.next(true);
+      })
+    );
   }
 
-  login(dto: LoginDto) {
-    return this.http.post<{ access_token: string }>(`${this.authURL}/login`, dto)
-      .pipe(
-        tap(response => {
-          localStorage.setItem('accessToken', response.access_token);
-        })
-      )
+  register(dto: RegisterDto): Observable<User> {
+    return this.http.post(`${this.authURL}/register`, dto, {
+      withCredentials: true
+    }).pipe(
+      switchMap(() => this.fetchUserFromServer())
+    );
   }
 
-  loadUserFromToken() {
-    if (!this.isBrowser()) return;
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const decoded = jwtDecode<JwtPayload>(token);
-      this.currentUserRoleSubject.next(decoded.role);
+  getCurrentUser(): Observable<User | null> {
+    if (this.isInitialized.value) {
+      return of(this.currentUserSubject.value);
+    } else {
+      return this.isInitialized.pipe(
+        filter(initialized => initialized),
+        take(1),
+        map(() => this.currentUserSubject.value)
+      );
     }
   }
 
-  setToken(token: string) {
-    if (!this.isBrowser()) return;
-    localStorage.setItem('accessToken', token);
-    const decoded = jwtDecode<JwtPayload>(token);
-    this.currentUserRoleSubject.next(decoded.role);
+  logout(): void {
+    this.http.post(`${this.authURL}/logout`, {}, { withCredentials: true })
+      .subscribe(() => this.currentUserSubject.next(null));
   }
 
   getRole() {
-    return this.currentUserRoleSubject.value;
+    return this.currentUser$.pipe(
+      map(user => user?.role ?? null)
+    );
   }
 
   hasRole(role: UserRoleEnum): boolean {
-    return this.currentUserRoleSubject.value === role;
+    return this.currentUserSubject.value?.role === role;
   }
 
-  logout() {
-    if (!this.isBrowser()) return;
-    localStorage.removeItem('accessToken');
-    this.currentUserRoleSubject.next(null);
+  private loadUserFromCookie(): void {
+    this.fetchUserFromServer().subscribe({
+      next: (user) => {
+        this.currentUserSubject.next(user);
+        this.isInitialized.next(true);
+      },
+      error: () => {
+        this.currentUserSubject.next(null);
+        this.isInitialized.next(true);
+      }
+    });
+  }
+
+  private fetchUserFromServer(): Observable<User> {
+    return this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
+      withCredentials: true
+    }).pipe(
+      tap(user => this.currentUserSubject.next(user))
+    );
   }
 }
