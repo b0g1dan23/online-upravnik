@@ -1,0 +1,60 @@
+services:
+  db:
+    container_name: postgres
+    image: postgres
+    environment:
+      PGDATA: /data/postgres
+    env_file:
+      - .env
+    volumes:
+      - db:/data/postgres
+    ports:
+      - "9999:5432"
+    networks:
+      - db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d online-upravnik -U admin" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    env_file:
+      - .env
+    networks:
+      - db
+    depends_on:
+      - db
+  seed:
+    build: .
+    command: npm run seed
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    env_file:
+      - .env
+    networks:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    restart: "no"
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db:
