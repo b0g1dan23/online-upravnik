@@ -57,7 +57,7 @@ export class IssueStatus {
     @Column({ type: 'enum', enum: IssueStatusEnum, default: IssueStatusEnum.REPORTED })
     status: IssueStatusEnum;
 
-    @ManyToOne(() => Issue, issue => issue.statusHistory, { onDelete: 'CASCADE' })
+    @ManyToOne("Issue", "statusHistory", { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'issueId' })
     issue: Issue;
 

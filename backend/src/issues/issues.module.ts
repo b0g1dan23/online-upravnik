@@ -6,12 +6,14 @@ import { IssuesGateway } from './issues.gateway';
 import { Issue, IssueStatus, IssuePicture } from './issues.entity';
 import { EmployeesModule } from 'src/employees/employees.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Issue, IssueStatus, IssuePicture]),
     EmployeesModule,
-    NotificationsModule
+    NotificationsModule,
+    UsersModule
   ],
   providers: [IssuesService, IssuesGateway],
   controllers: [IssuesController],

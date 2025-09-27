@@ -48,7 +48,12 @@ export class UsersService {
     }
 
     async findUserByID(id: string) {
-        const user = await this.userRepository.findOne({ where: { id } });
+        const user = await this.userRepository.findOne({
+            where: { id },
+            relations: {
+                buildingLivingIn: true
+            }
+        });
         if (!user)
             throw new NotFoundException("User with that ID not found!");
         return new ViewUserBaseDTO(user);

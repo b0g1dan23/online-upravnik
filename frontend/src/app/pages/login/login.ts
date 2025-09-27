@@ -2,31 +2,22 @@ import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap, filter } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, filter } from 'rxjs';
 import { Card } from '../../components/ui/card/card';
 import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
-import { AuthService } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { BuildingsService } from '../../services/buildings';
+import { BuildingsService, BuildingsShorthand } from '../../services/buildings';
 import { Store } from '@ngrx/store';
 import { UserActions } from '../../store/user/user.actions';
 import { LoginDto, NestError, UserRoleEnum } from '../../store/user/user.model';
 import { selectUser, selectUserError, selectUserLoading } from '../../store/user/user.selectors';
-import { HttpErrorResponse } from '@angular/common/http';
-
-export type BuildingsShorthand = {
-  id: string;
-  name: string;
-  address: string;
-}
 
 @Component({
   selector: 'app-login',
   imports: [CommonModule, ReactiveFormsModule, Card, Input, Button],
   standalone: true,
   templateUrl: './login.html',
-  styleUrl: './login.scss'
 })
 export class Login implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -46,7 +37,6 @@ export class Login implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private authService: AuthService,
     private snackBar: MatSnackBar,
     private buildingsService: BuildingsService
   ) { }

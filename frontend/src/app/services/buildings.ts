@@ -1,6 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BuildingsShorthand } from '../pages/login/login';
+
+export type BuildingsShorthand = {
+  id: string;
+  name: string;
+  address: string;
+}
 
 @Injectable({
   providedIn: 'root'

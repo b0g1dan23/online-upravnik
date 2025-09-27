@@ -85,11 +85,10 @@ export class NotificationsService {
         });
     }
 
-    // Get all users from the same building as the issue
     async getUsersInSameBuildingAsIssue(issueId: string): Promise<string[]> {
         const result = await this.userRepository
             .createQueryBuilder('user')
-            .innerJoin('user.building', 'building')
+            .innerJoin('user.buildingLivingIn', 'building')
             .innerJoin('building.issues', 'issue', 'issue.id = :issueId', { issueId })
             .select('user.id')
             .getMany();
@@ -97,7 +96,6 @@ export class NotificationsService {
         return result.map(user => user.id);
     }
 
-    // Create notification for all users in the same building as the issue
     async createIssueNotificationForBuilding(
         type: NotificationType,
         issueId: string,

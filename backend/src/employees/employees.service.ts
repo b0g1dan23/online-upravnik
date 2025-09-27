@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Employee } from './employees.entity';
 import { CreateEmployeeDTO } from './DTOs/create-employee.dto';
+import { ViewEmployeeDTO } from './DTOs/view-employee.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -19,15 +20,16 @@ export class EmployeesService {
         }
 
         const employee = this.employeesRepository.create({ ...employeeData });
-        return this.employeesRepository.save(employee);
+        return new ViewEmployeeDTO(await this.employeesRepository.save(employee));
     }
 
     async findEmployees() {
-        return this.employeesRepository.find();
+        const employees = await this.employeesRepository.find();
+        return employees.map(employee => new ViewEmployeeDTO(employee));
     }
 
-    async findEmployeeById(id: string) {
-        const employee = await this.employeesRepository.findOne({ where: { id } });
+    async findEmployeeById(id: string, relations?: string[]) {
+        const employee = await this.employeesRepository.findOne({ where: { id }, relations });
         if (!employee) {
             throw new NotFoundException("Employee with that ID not found!");
         }

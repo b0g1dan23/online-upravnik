@@ -1,138 +1,226 @@
-import {
-    WebSocketGateway,
-    OnGatewayInit,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { WebSocketServer } from '@nestjs/websockets';
+import { Injectable } from "@nestjs/common";
 import { Server, WebSocket } from 'ws';
-import { Injectable } from '@nestjs/common';
-import { IssuesService } from './issues.service';
-import { ViewIssueDTO } from './DTOs/view-issue.dto';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { UsersService } from "src/users/users.service";
+import { IssuesService } from "./issues.service";
+import { ViewIssueCurrentStatusDTO, ViewIssueDTO } from "./DTOs/view-issue.dto";
+import { EmployeesService } from "src/employees/employees.service";
+import { UserRoleEnum } from "src/users/users.entity";
 
 interface ClientInfo {
-    userId?: string;
+    userID?: string;
+    buildingID?: string;
+    userRole?: UserRoleEnum;
     socket: WebSocket;
 }
 
 @Injectable()
-@WebSocketGateway({ path: '/issues' })
-export class IssuesGateway
-    implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+@WebSocketGateway({ cors: { origin: '*' }, path: '/issues' })
+export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+    private clients: Map<WebSocket, ClientInfo> = new Map();
+
     @WebSocketServer()
     server: Server;
 
-    private clients: Map<WebSocket, ClientInfo> = new Map();
+    constructor(
+        private readonly userService: UsersService,
+        private readonly employeesService: EmployeesService,
+        private readonly issuesService: IssuesService) { }
 
-    constructor(private issuesService: IssuesService) { }
-
-    afterInit(server: Server) {
-        console.log('✅ WS server initialized on /issues');
+    handleDisconnect(client: WebSocket) {
+        this.clients.delete(client);
     }
 
     handleConnection(client: WebSocket) {
-        console.log('Client connected');
         this.clients.set(client, { socket: client });
 
         client.on('message', async (msg: string) => {
             try {
-                console.log(`📨 Received message: ${msg}`);
                 const { event, data } = JSON.parse(msg);
 
-                if (event === 'subscribe_user_issues') {
-                    console.log(`🔔 Subscribing user ${data.userId} to their issues`);
-                    const clientInfo = this.clients.get(client);
-                    if (clientInfo) {
-                        clientInfo.userId = data.userId;
-                        this.clients.set(client, clientInfo);
-                        console.log(`✅ User ${data.userId} subscribed successfully`);
-                    }
-
-                    const userIssues = (await this.issuesService.getAllIssuesForUser(
-                        data.userId,
-                    )).map(issue => new ViewIssueDTO(issue));
-                    client.send(
-                        JSON.stringify({ event: 'USER_ISSUES_LIST', data: userIssues }),
-                    );
-                    console.log(`📤 Sent ${userIssues.length} issues to user ${data.userId}`);
+                if (event === 'subscribe_building_issues') {
+                    await this.handleSubscribeBuildingIssues(client, data.userID);
                 }
-
-                if (event === 'unsubscribe_user_issues') {
-                    console.log(`🔕 Unsubscribing client from user issues`);
-                    const clientInfo = this.clients.get(client);
-                    if (clientInfo) {
-                        clientInfo.userId = undefined;
-                        this.clients.set(client, clientInfo);
-                    }
+                if (event === 'subscribe_employee_issues') {
+                    await this.handleSubscribeEmployeeIssues(client, data.userID);
+                }
+                if (event === 'subscribe_manager_issues') {
+                    await this.handleSubscribeManagerIssues(client, data.userID);
+                }
+                if (event === 'unsubscribe') {
+                    this.clients.delete(client);
                 }
             } catch (err) {
-                console.error('❌ WS error parsing message', err);
-                client.send(JSON.stringify({ event: 'ERROR', data: 'Invalid message' }));
+                console.error('Error processing message:', err);
             }
-        });
+        })
     }
 
-    handleDisconnect(client: WebSocket) {
-        console.log('Client disconnected');
-        this.clients.delete(client);
+    afterInit() {
+        console.log("WS Initialized on /issues");
     }
 
-    async notifyUserIssueUpdate(userId: string, issue: any) {
-        console.log(`Notifying user ${userId} about issue update`);
-
-        this.clients.forEach((clientInfo) => {
-            if (clientInfo.userId === userId && clientInfo.socket.readyState === 1) {
-                clientInfo.socket.send(
-                    JSON.stringify({ event: 'USER_ISSUE_UPDATED', data: issue }),
-                );
-            }
-        });
-    }
-
-    async notifyUserNewIssue(userId: string, issue: any) {
-        console.log(`🔔 Attempting to notify user ${userId} about new issue`);
-        console.log(`📊 Total connected clients: ${this.clients.size}`);
-
-        let notifiedClients = 0;
-        this.clients.forEach((clientInfo, socket) => {
-            console.log(`👤 Client userId: ${clientInfo.userId}, target userId: ${userId}`);
-            console.log(`🔌 Client readyState: ${clientInfo.socket.readyState}`);
-
-            if (clientInfo.userId === userId && clientInfo.socket.readyState === 1) {
-                console.log(`✅ Sending notification to client`);
-                clientInfo.socket.send(
-                    JSON.stringify({ event: 'USER_NEW_ISSUE', data: issue }),
-                );
-                notifiedClients++;
-            }
-        });
-
-        console.log(`📤 Notified ${notifiedClients} clients for user ${userId}`);
-    }
-
-    async refreshUserIssues(userId: string) {
-        console.log(`Refreshing issues for ${userId}`);
-
+    private async handleSubscribeEmployeeIssues(client: WebSocket, employeeID: string) {
         try {
-            const userIssues = await this.issuesService.getAllIssuesForUser(userId);
+            const employee = await this.employeesService.findEmployeeById(employeeID);
 
-            this.clients.forEach((clientInfo) => {
-                if (clientInfo.userId === userId && clientInfo.socket.readyState === 1) {
-                    clientInfo.socket.send(
-                        JSON.stringify({ event: 'USER_ISSUES_LIST', data: userIssues }),
-                    );
-                }
-            });
-        } catch (error) {
-            console.error('Error refreshing user issues:', error);
+            const clientInfo = this.clients.get(client);
+            if (clientInfo) {
+                clientInfo.userID = employeeID;
+                clientInfo.buildingID = undefined;
+                clientInfo.userRole = UserRoleEnum.EMPLOYEE;
+                this.clients.set(client, clientInfo);
+            }
+
+            client.send(JSON.stringify({
+                event: "SUCCESSFULLY_SUBSCRIBED_EMPLOYEE",
+                data: { employeeID: employee.id }
+            }));
+        } catch (err) {
+            client.send(JSON.stringify({ event: 'ERROR', data: 'Failed to subscribe employee' }));
         }
     }
 
-    notifyNewTicket(ticket: any) {
-        console.log('Broadcasting new ticket');
-        this.server.clients.forEach((client) => {
-            if (client.readyState === 1) {
-                client.send(JSON.stringify({ event: 'NEW_TICKET', data: ticket }));
+    private async handleSubscribeManagerIssues(client: WebSocket, userID: string) {
+        try {
+            const user = await this.userService.findUserByID(userID);
+
+            if (user.role !== UserRoleEnum.MANAGER) {
+                client.send(JSON.stringify({
+                    event: 'ERROR',
+                    data: "User is not a manager"
+                }))
+                return;
+            }
+
+            const clientInfo = this.clients.get(client);
+            if (clientInfo) {
+                clientInfo.userID = userID;
+                clientInfo.buildingID = undefined;
+                clientInfo.userRole = UserRoleEnum.EMPLOYEE;
+                this.clients.set(client, clientInfo);
+            }
+
+            client.send(JSON.stringify({
+                event: 'SUCCESSFULLY_SUBSCRIBED_MANAGER',
+                data: "Subscribed to manager issue notifications"
+            }))
+        } catch (error) {
+            client.send(JSON.stringify({ event: 'ERROR', data: 'Failed to subscribe manager' }));
+        }
+    }
+
+    private async handleSubscribeBuildingIssues(client: WebSocket, userID: string) {
+        try {
+            const user = await this.userService.findUserByID(userID);
+
+            if (!user.buildingLivingInID) {
+                client.send(JSON.stringify({
+                    event: 'ERROR',
+                    data: "User is not associated with any building"
+                }))
+                return;
+            }
+
+            const clientInfo = this.clients.get(client);
+            if (clientInfo) {
+                clientInfo.userID = userID;
+                clientInfo.buildingID = user.buildingLivingInID.id;
+                clientInfo.userRole = UserRoleEnum.TENANT;
+                this.clients.set(client, clientInfo);
+            }
+
+            client.send(JSON.stringify({
+                event: 'SUCCESSFULLY_SUBSCRIBED_BUILDING',
+                data: {
+                    buildingID: user.buildingLivingInID.id,
+                }
+            }))
+        } catch (error) {
+            client.send(JSON.stringify({ event: 'ERROR', data: 'Failed to subscribe' }));
+        }
+    }
+
+    async notifyBuildingNewIssue(buildingID: string, issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'BUILDING_NEW_ISSUE',
+            data: issue
+        })
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.buildingID === buildingID &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
+            };
+        });
+    }
+
+    async notifyBuildingIssueUpdate(buildingID: string, issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'BUILDING_ISSUE_UPDATE',
+            data: issue
+        })
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.buildingID === buildingID &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
+            }
+        })
+    }
+
+    async notifyUserIssueUpdate(userID: string, issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'USER_ISSUE_UPDATE',
+            data: issue
+        })
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.userID === userID &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
+            }
+        })
+    }
+
+    async notifySpecificEmployeeNewIssue(issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'SPECIFIC_EMPLOYEE_NEW_ISSUE',
+            data: issue
+        })
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.userID === issue.employeeResponsible.id &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
+            }
+        })
+    }
+
+    async notifyAllManagersNewIssue(issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'MANAGER_NEW_ISSUE',
+            data: issue
+        })
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.userRole === UserRoleEnum.MANAGER &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
+            }
+        })
+    }
+
+    async notifyAllManagersIssueStatusChange(issue: ViewIssueCurrentStatusDTO) {
+        const message = JSON.stringify({
+            event: 'MANAGER_ISSUE_STATUS_CHANGED',
+            data: issue
+        });
+
+        this.clients.forEach((clientInfo) => {
+            if (clientInfo.userRole === UserRoleEnum.MANAGER &&
+                clientInfo.socket.readyState === WebSocket.OPEN) {
+                clientInfo.socket.send(message);
             }
         });
     }

@@ -3,7 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { mergeMap, map, catchError, of, switchMap } from 'rxjs';
 import { UserActions } from './user.actions';
 import { HttpClient } from '@angular/common/http';
-import { NestError, User } from './user.model';
+import { User } from './user.model';
 
 @Injectable()
 export class UserEffects {

@@ -20,6 +20,12 @@ export enum UserRoleEnum {
     EMPLOYEE = 'EMPLOYEE'
 }
 
+export interface Building {
+    id: string;
+    name: string;
+    address: string;
+}
+
 export interface User {
     id: string;
     firstName: string;
@@ -27,6 +33,7 @@ export interface User {
     email: string;
     phoneNumber: string;
     role: UserRoleEnum;
+    buildingLivingInID: Building | null;
 }
 
 export interface NestError {
