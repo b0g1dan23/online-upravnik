@@ -1,115 +1,48 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, filter, map, of, switchMap, take, tap } from 'rxjs';
-
-export interface LoginDto {
-  email: string;
-  password: string;
-}
-
-export interface RegisterDto {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-  buildingLivingInID: string;
-}
-
-export enum UserRoleEnum {
-  MANAGER = 'MANAGER',
-  TENANT = 'TENANT',
-  EMPLOYEE = 'EMPLOYEE'
-}
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  role: UserRoleEnum;
-}
+import { inject, Injectable } from '@angular/core';
+import { Observable, map, take } from 'rxjs';
+import { LoginDto, RegisterDto, User, UserRoleEnum } from '../store/user/user.model';
+import { Store } from '@ngrx/store';
+import { UserActions } from '../store/user/user.actions';
+import { selectUser, selectUserRole } from '../store/user/user.selectors';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private authURL = `http://localhost:8080/auth`;
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  private isInitialized = new BehaviorSubject<boolean>(false);
+  private store = inject(Store);
 
-  public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
-
-  constructor(private http: HttpClient) {
+  constructor() {
     this.loadUserFromCookie();
   }
 
-  login(dto: LoginDto): Observable<User> {
-    return this.http.post(`${this.authURL}/login`, dto, {
-      withCredentials: true
-    }).pipe(
-      switchMap(() => this.fetchUserFromServer()),
-      tap(user => {
-        this.currentUserSubject.next(user);
-        this.isInitialized.next(true);
-      })
-    );
+  login(dto: LoginDto) {
+    this.store.dispatch(UserActions['[Auth]Login']({ dto }));
   }
 
-  register(dto: RegisterDto): Observable<User> {
-    return this.http.post(`${this.authURL}/register`, dto, {
-      withCredentials: true
-    }).pipe(
-      switchMap(() => this.fetchUserFromServer())
-    );
+  register(dto: RegisterDto) {
+    this.store.dispatch(UserActions['[Auth]Register']({ dto }));
   }
 
   getCurrentUser(): Observable<User | null> {
-    if (this.isInitialized.value) {
-      return of(this.currentUserSubject.value);
-    } else {
-      return this.isInitialized.pipe(
-        filter(initialized => initialized),
-        take(1),
-        map(() => this.currentUserSubject.value)
-      );
-    }
+    return this.store.select(selectUser);
   }
 
   logout(): void {
-    this.http.post(`${this.authURL}/logout`, {}, { withCredentials: true })
-      .subscribe(() => this.currentUserSubject.next(null));
+    this.store.dispatch(UserActions['[Auth]Logout']());
   }
 
   getRole() {
-    return this.currentUser$.pipe(
-      map(user => user?.role ?? null)
+    return this.store.select(selectUserRole);
+  }
+
+  hasRole(role: UserRoleEnum) {
+    return this.store.select(selectUserRole).pipe(
+      map(userRole => userRole === role),
+      take(1)
     );
   }
 
-  hasRole(role: UserRoleEnum): boolean {
-    return this.currentUserSubject.value?.role === role;
-  }
-
-  private loadUserFromCookie(): void {
-    this.fetchUserFromServer().subscribe({
-      next: (user) => {
-        this.currentUserSubject.next(user);
-        this.isInitialized.next(true);
-      },
-      error: () => {
-        this.currentUserSubject.next(null);
-        this.isInitialized.next(true);
-      }
-    });
-  }
-
-  private fetchUserFromServer(): Observable<User> {
-    return this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
-      withCredentials: true
-    }).pipe(
-      tap(user => this.currentUserSubject.next(user))
-    );
+  public loadUserFromCookie(): void {
+    this.store.dispatch(UserActions['[User]LoadUser']());
   }
 }

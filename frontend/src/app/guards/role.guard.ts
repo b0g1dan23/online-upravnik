@@ -1,27 +1,26 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { AuthService } from '../services/auth';
-import { Observable, catchError, filter, firstValueFrom, map, of, switchMap, take } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { selectUser } from '../store/user/user.selectors';
 
 @Injectable({ providedIn: 'root' })
 export class RoleGuard implements CanActivate {
-    constructor(private authService: AuthService, private router: Router) { }
+    store = inject(Store);
+    private user$ = this.store.select(selectUser);
+    constructor(private router: Router) { }
 
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
         const expectedRole = route.data['role'];
 
-        return this.authService.getCurrentUser().pipe(
+        return this.user$.pipe(
             map(user => {
-                console.log('Expected role:', expectedRole, 'User role:', user?.role);
-
                 if (!user) {
-                    console.log('No user, redirecting to login');
                     this.router.navigate(['/login']);
                     return false;
                 }
 
                 if (user.role !== expectedRole) {
-                    console.log('Role mismatch, redirecting to login');
                     this.router.navigate(['/login']);
                     return false;
                 }

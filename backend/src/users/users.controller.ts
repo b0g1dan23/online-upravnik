@@ -23,7 +23,6 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @Get('/from-cookie')
     async findUserFromCookie(@CurrentUser() user: JwtUser): Promise<ViewUserBaseDTO> {
-        console.log(user);
         const loggedUser = await this.usersService.findUserByID(user.id);
         if (!loggedUser) {
             throw new NotFoundException("No user found from cookie");

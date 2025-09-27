@@ -1,15 +1,19 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, tap, switchMap, filter } from 'rxjs';
 import { Card } from '../../components/ui/card/card';
 import { Input } from '../../components/ui/input/input';
 import { Button } from '../../components/ui/button/button';
-import { AuthService, LoginDto, UserRoleEnum } from '../../services/auth';
+import { AuthService } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from '@angular/common/http';
 import { BuildingsService } from '../../services/buildings';
+import { Store } from '@ngrx/store';
+import { UserActions } from '../../store/user/user.actions';
+import { LoginDto, NestError, UserRoleEnum } from '../../store/user/user.model';
+import { selectUser, selectUserError, selectUserLoading } from '../../store/user/user.selectors';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export type BuildingsShorthand = {
   id: string;
@@ -26,7 +30,12 @@ export type BuildingsShorthand = {
 })
 export class Login implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private store = inject(Store);
   public buildings = signal<BuildingsShorthand[]>([]);
+
+  user$ = this.store.select(selectUser);
+  loading$ = this.store.select(selectUserLoading);
+  error$ = this.store.select(selectUserError);
 
   isRegisterMode = false;
 
@@ -46,16 +55,8 @@ export class Login implements OnInit, OnDestroy {
     this.initializeForms();
     this.setupQueryParamSubscription();
     this.setupFormValueChanges();
-    this.buildingsService.getBuildingsList()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (buildings) => {
-          this.buildings.set(buildings);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.snackBar.open(err.error.message);
-        }
-      });
+    this.setupStoreSubscriptions();
+    this.loadBuildings();
   }
 
   ngOnDestroy(): void {
@@ -108,6 +109,58 @@ export class Login implements OnInit, OnDestroy {
       .subscribe();
   }
 
+  private setupStoreSubscriptions(): void {
+    this.user$.pipe(
+      takeUntil(this.destroy$),
+      filter(user => user !== null),
+      tap(user => {
+        this.snackBar.open(`Uspesna prijava! Dobrodosao ${user.firstName}`);
+        this.navigateByRole(user.role);
+      })
+    ).subscribe();
+
+    this.error$.pipe(
+      takeUntil(this.destroy$),
+      filter(err => err !== null),
+      tap((err) => {
+        this.snackBar.open(err.message);
+
+        setTimeout(() => {
+          this.store.dispatch(UserActions['[User]LoadUserSuccess']({ user: null }));
+        }, 100);
+      })
+    ).subscribe();
+  }
+
+  private navigateByRole(role: UserRoleEnum): void {
+    switch (role) {
+      case UserRoleEnum.TENANT:
+        this.router.navigate(['/tenant']);
+        break;
+      case UserRoleEnum.MANAGER:
+        this.router.navigate(['/manager']);
+        break;
+      case UserRoleEnum.EMPLOYEE:
+        this.router.navigate(['/employee']);
+        break;
+      default:
+        this.router.navigate(['/login']);
+    }
+  }
+
+  private loadBuildings(): void {
+    this.buildingsService.getBuildingsList()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (buildings) => {
+          this.buildings.set(buildings);
+        },
+        error: (err: NestError) => {
+          this.snackBar.open(err.message);
+        }
+      });
+  }
+
   private passwordMatchValidator(form: FormGroup) {
     const password = form.get('password');
     const confirmPassword = form.get('confirmPassword');
@@ -131,38 +184,9 @@ export class Login implements OnInit, OnDestroy {
     if (this.loginForm.valid) {
       const loginData: LoginDto = this.loginForm.value;
 
-      this.authService.login(loginData)
-        .pipe(
-          tap(() => {
-            this.snackBar.open("Uspesna prijava!");
-          }),
-          takeUntil(this.destroy$)
-        )
-        .subscribe({
-          next: user => {
-            console.log('Current role:', user.role);
-
-            switch (user.role) {
-              case UserRoleEnum.TENANT:
-                this.router.navigate(['/tenant']);
-                break;
-              case UserRoleEnum.MANAGER:
-                this.router.navigate(['/manager']);
-                break;
-              case UserRoleEnum.EMPLOYEE:
-                this.router.navigate(['/employee']);
-                break;
-              default:
-                this.router.navigate(['/login']);
-            }
-          },
-          error: (err: HttpErrorResponse) => {
-            this.router.navigate(['/login']);
-            this.snackBar.open(err.error.message);
-          }
-        });
+      this.store.dispatch(UserActions['[Auth]Login']({ dto: loginData }));
     } else {
-      console.log('❌ Login forma nije validna');
+      console.log("Login forma nije validna");
       this.markFormGroupTouched(this.loginForm);
     }
   }
@@ -172,38 +196,9 @@ export class Login implements OnInit, OnDestroy {
       const registerData = this.registerForm.value;
       const { confirmPassword, ...dataToSend } = registerData;
 
-      this.authService.register(dataToSend).pipe(
-        tap(() => {
-          this.snackBar.open("Uspesna registracija!");
-        }),
-        switchMap(() => this.authService.getRole()),
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (role) => {
-          if (role === null) {
-            this.router.navigate(['/login']);
-          }
-          switch (role) {
-            case UserRoleEnum.TENANT:
-              this.router.navigate(['/tenant']);
-              break;
-            case UserRoleEnum.MANAGER:
-              this.router.navigate(['/manager']);
-              break;
-            case UserRoleEnum.EMPLOYEE:
-              this.router.navigate(['/employee']);
-              break;
-            default:
-              this.router.navigate(['/login']);
-          }
-        },
-        error: (err: HttpErrorResponse) => {
-          this.router.navigate(['/login']);
-          this.snackBar.open(err.error.message);
-        }
-      })
+      this.store.dispatch(UserActions['[Auth]Register']({ dto: dataToSend }));
     } else {
-      console.log('❌ Register forma nije validna');
+      console.log("Register forma nije validna");
       this.markFormGroupTouched(this.registerForm);
     }
   }
@@ -228,5 +223,4 @@ export class Login implements OnInit, OnDestroy {
       queryParams: {}
     });
   }
-
 }

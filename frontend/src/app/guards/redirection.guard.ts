@@ -1,20 +1,24 @@
-import { Injectable } from "@angular/core";
+import { inject, Injectable } from "@angular/core";
 import { CanActivate, Router } from "@angular/router";
-import { AuthService, UserRoleEnum } from "../services/auth";
+import { AuthService } from "../services/auth";
 import { Observable, map, take } from "rxjs";
+import { UserRoleEnum } from "../store/user/user.model";
+import { Store } from "@ngrx/store";
+import { selectUser } from "../store/user/user.selectors";
 
 @Injectable({
     providedIn: 'root'
 })
 export class RedirectionGuard implements CanActivate {
+    store = inject(Store);
+    private user$ = this.store.select(selectUser);
 
     constructor(
-        private authService: AuthService,
         private router: Router
     ) { }
 
     canActivate(): Observable<boolean> {
-        return this.authService.getCurrentUser().pipe(
+        return this.user$.pipe(
             take(1),
             map(user => {
                 if (!user) {
