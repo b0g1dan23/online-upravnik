@@ -1,17 +1,34 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { mergeMap, map, catchError, of, switchMap } from 'rxjs';
+import { mergeMap, map, catchError, of, switchMap, takeUntil, filter, take } from 'rxjs';
 import { UserActions } from './user.actions';
 import { HttpClient } from '@angular/common/http';
-import { User } from './user.model';
+import { User, UserRoleEnum } from './user.model';
+import { Issue } from '../tenant/tenant.model';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { TenantActions } from '../tenant/tenant.actions';
+import { Store } from '@ngrx/store';
+import { selectUser } from './user.selectors';
+
+export interface BackendWebSocketMessage {
+    event: 'BUILDING_NEW_ISSUE' | 'BUILDING_ISSUE_UPDATE' | 'USER_ISSUE_UPDATE' | "SUCCESSFULLY_SUBSCRIBED_BUILDING";
+    data: Issue | { message: string } | string;
+}
+
+export interface FrontendWebSocketMessage {
+    event: 'subscribe_building_issues' | 'subscribe_employee_issues' | 'subscribe_manager_issues' | 'unsubscribe';
+    data: { userID: string };
+}
 
 @Injectable()
 export class UserEffects {
     actions$ = inject(Actions)
     http = inject(HttpClient);
+    store = inject(Store);
 
     private authURL = `http://localhost:8080/auth`;
     private usersURL = `http://localhost:8080/users`;
+    private wsIssuesURL = `ws://localhost:8080/ws/issues`;
 
     constructor() { }
 
@@ -84,4 +101,85 @@ export class UserEffects {
             )
         );
     });
+
+    initializeIssueWebSocket$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(UserActions['[IssueWebSocket]Initialize']),
+            mergeMap(() => {
+                const websocket$ = webSocket<BackendWebSocketMessage>({
+                    url: this.wsIssuesURL,
+                    openObserver: {
+                        next: () => {
+                            this.store.dispatch(UserActions["[IssueWebSocket]Connected"]());
+                            this.subscribeToBuilding(websocket$);
+                        }
+                    },
+                    closeObserver: {
+                        next: () => {
+                            this.store.dispatch(UserActions["[IssueWebSocket]Disconnected"]());
+                        }
+                    }
+                });
+                return websocket$.pipe(map(message => this.handleIssueWebSocketMessage(message)),
+                    catchError(error => {
+                        return of(UserActions["[IssueWebSocket]Error"]({ error }));
+                    }),
+                    takeUntil(this.actions$.pipe(
+                        ofType(UserActions["[IssueWebSocket]Disconnect"])
+                    )));
+            })
+        )
+    })
+
+    disconnectIssueWebSocket$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(UserActions["[IssueWebSocket]Disconnect"]),
+            map(() => {
+                this.store.dispatch(UserActions["[IssueWebSocket]Disconnected"]());
+            })
+        );
+    }, { dispatch: false })
+
+    private subscribeToBuilding(websocket$: any) {
+        this.store.select(selectUser).pipe(
+            filter(user => user !== null),
+            take(1)
+        ).subscribe(user => {
+            if (user) {
+                const subscribeMessage: FrontendWebSocketMessage = {
+                    event: user.role === UserRoleEnum.EMPLOYEE ? 'subscribe_employee_issues' : user.role === UserRoleEnum.MANAGER ? 'subscribe_manager_issues' : 'subscribe_building_issues',
+                    data: { userID: user.id }
+                };
+                websocket$.next(subscribeMessage);
+                return;
+            }
+        });
+    }
+
+    private handleIssueWebSocketMessage(message: BackendWebSocketMessage) {
+        switch (message.event) {
+            case 'SUCCESSFULLY_SUBSCRIBED_BUILDING':
+                return UserActions["[IssueWebSocket]SubscribedSuccessfully"]({
+                    data: message.data as { message: string }
+                });
+
+            case 'BUILDING_NEW_ISSUE':
+                return TenantActions["[BuildingIssues]NewIssueAdded"]({
+                    issue: message.data as Issue
+                });
+
+            case 'BUILDING_ISSUE_UPDATE':
+                return TenantActions["[BuildingIssues]IssueUpdated"]({
+                    issue: message.data as Issue
+                });
+
+            case 'USER_ISSUE_UPDATE':
+                return TenantActions["[MyIssues]IssueUpdated"]({
+                    issue: message.data as Issue
+                });
+
+            default:
+                return UserActions["[IssueWebSocket]UnknownMessage"]({ message });
+        }
+    }
 }

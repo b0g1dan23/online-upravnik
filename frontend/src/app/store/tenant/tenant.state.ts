@@ -8,10 +8,5 @@ export interface TenantState {
         myIssues: boolean;
         buildingIssues: boolean;
     };
-    webSocket: {
-        connected: boolean;
-        connecting: boolean;
-        error: any | null;
-    };
     error: NestError | null;
 }

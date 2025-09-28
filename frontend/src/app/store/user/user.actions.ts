@@ -18,5 +18,16 @@ export const UserActions = createActionGroup({
 
         '[Auth] Logout': emptyProps(),
         '[Auth] Logout Success': emptyProps(),
+
+        '[Issue WebSocket] Initialize': emptyProps(),
+        '[Issue WebSocket] Disconnect': emptyProps(),
+        '[Issue WebSocket] Connected': emptyProps(),
+        '[Issue WebSocket] Disconnected': emptyProps(),
+        '[Issue WebSocket] Error': props<{ error: any }>(),
+        '[Issue WebSocket] Server Error': props<{ error: string }>(),
+        '[Issue WebSocket] Unknown Message': props<{ message: any }>(),
+
+        '[Issue WebSocket] Send Subscribe': props<{ userID: string }>(),
+        '[Issue WebSocket] Subscribed Successfully': props<{ data: { message: string } }>(),
     }
 })

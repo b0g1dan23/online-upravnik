@@ -9,11 +9,6 @@ export const initialTenantState: TenantState = {
         myIssues: false,
         buildingIssues: false
     },
-    webSocket: {
-        connected: false,
-        connecting: false,
-        error: null
-    },
     error: null
 }
 
@@ -31,12 +26,6 @@ export const tenantReducer = createReducer(
     on(TenantActions["[BuildingIssues]LoadBuildingIssuesSuccess"], (state, { issues }) => ({ ...state, buildingIssues: issues, loading: { ...state.loading, buildingIssues: false } })),
     on(TenantActions["[BuildingIssues]LoadBuildingIssuesFailure"], (state, { error }) => ({ ...state, error, loading: { ...state.loading, buildingIssues: false } })),
 
-    on(TenantActions["[WebSocket]Initialize"], (state) => ({ ...state, webSocket: { ...state.webSocket, connecting: true, error: null } })),
-    on(TenantActions["[WebSocket]Disconnect"], (state) => ({ ...state, webSocket: { ...state.webSocket, connecting: false, connected: false } })),
-    on(TenantActions["[WebSocket]Connected"], (state) => ({ ...state, webSocket: { ...state.webSocket, connecting: false, connected: true } })),
-    on(TenantActions["[WebSocket]Disconnected"], (state) => ({ ...state, webSocket: { ...state.webSocket, connecting: false, connected: false } })),
-    on(TenantActions["[WebSocket]Error"], (state, { error }) => ({ ...state, webSocket: { ...state.webSocket, error } })),
-    on(TenantActions["[WebSocket]UnknownMessage"], (state) => state),
 
     on(TenantActions["[BuildingIssues]IssueUpdated"], (state, { issue }) => {
         const buildingIssueIndex = state.buildingIssues.findIndex(i => i.id === issue.id);

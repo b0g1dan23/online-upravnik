@@ -17,17 +17,6 @@ export const TenantActions = createActionGroup({
         '[Building Issues] Load building issues Success': props<{ issues: Issue[] }>(),
         '[Building Issues] Load building issues Failure': props<{ error: NestError }>(),
 
-        '[WebSocket] Initialize': emptyProps(),
-        '[WebSocket] Disconnect': emptyProps(),
-        '[WebSocket] Connected': emptyProps(),
-        '[WebSocket] Disconnected': emptyProps(),
-        '[WebSocket] Error': props<{ error: any }>(),
-        '[WebSocket] Server Error': props<{ error: string }>(),
-        '[WebSocket] Unknown Message': props<{ message: any }>(),
-
-        '[WebSocket] Send Subscribe': props<{ userID: string }>(),
-        '[WebSocket] Subscribed Successfully': props<{ data: { buildingID: string } }>(),
-
         '[Building Issues] New Issue Added': props<{ issue: Issue }>(),
         '[Building Issues] Issue Updated': props<{ issue: Issue }>(),
 

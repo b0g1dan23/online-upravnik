@@ -62,7 +62,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
     private async handleSubscribeEmployeeIssues(client: WebSocket, employeeID: string) {
         try {
-            const employee = await this.employeesService.findEmployeeById(employeeID);
+            await this.employeesService.findEmployeeById(employeeID);
 
             const clientInfo = this.clients.get(client);
             if (clientInfo) {
@@ -74,7 +74,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
             client.send(JSON.stringify({
                 event: "SUCCESSFULLY_SUBSCRIBED_EMPLOYEE",
-                data: { employeeID: employee.id }
+                data: { message: "Successfully subscribed to employee issues" }
             }));
         } catch (err) {
             client.send(JSON.stringify({ event: 'ERROR', data: 'Failed to subscribe employee' }));
@@ -103,7 +103,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
             client.send(JSON.stringify({
                 event: 'SUCCESSFULLY_SUBSCRIBED_MANAGER',
-                data: "Subscribed to manager issue notifications"
+                data: "Successfully subscribed to manager issues"
             }))
         } catch (error) {
             client.send(JSON.stringify({ event: 'ERROR', data: 'Failed to subscribe manager' }));
@@ -133,7 +133,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
             client.send(JSON.stringify({
                 event: 'SUCCESSFULLY_SUBSCRIBED_BUILDING',
                 data: {
-                    buildingID: user.buildingLivingInID.id,
+                    message: "Successfully subscribed to building issues",
                 }
             }))
         } catch (error) {
