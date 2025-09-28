@@ -1,7 +1,7 @@
 import { Building } from "src/buildings/buildings.entity";
 import { Issue, IssuePicture } from "src/issues/issues.entity";
 import argon from 'argon2';
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export enum UserRoleEnum {
     MANAGER = 'MANAGER',
@@ -46,6 +46,7 @@ export class User {
     createdAt: Date;
 
     @BeforeInsert()
+    @BeforeUpdate()
     async hashingPassword() {
         if (this.password)
             this.password = await argon.hash(this.password);

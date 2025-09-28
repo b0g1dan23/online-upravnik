@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from "@angular/common/http";
+import { Employee } from "../employee/employee.model";
 
 export interface LoginDto {
     email: string;
@@ -24,6 +25,7 @@ export interface Building {
     id: string;
     name: string;
     address: string;
+    employeeResponsible: Employee | null;
 }
 
 export interface User {

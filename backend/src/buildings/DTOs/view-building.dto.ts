@@ -1,4 +1,4 @@
-import { ViewEmployeeDTO } from "src/employees/DTOs/view-employee.dto";
+import { SimpleViewEmployeeDTO } from "src/employees/DTOs/view-employee.dto";
 import { Building } from "../buildings.entity";
 import { ViewUserBaseDTO } from "src/users/DTOs/view-user-base.dto";
 import { ViewIssueDTO } from "src/issues/DTOs/view-issue.dto";
@@ -32,11 +32,11 @@ export class ViewBuildingDTO extends ViewBuildingBaseDTO {
     issues: ViewIssueDTO[];
 
     @IsNotEmpty()
-    employeeResponsible: ViewEmployeeDTO;
+    employeeResponsible: SimpleViewEmployeeDTO;
 
     constructor(building: Building) {
         super(building);
-        this.employeeResponsible = new ViewEmployeeDTO(building.employeeResponsible);
+        this.employeeResponsible = new SimpleViewEmployeeDTO(building.employeeResponsible);
         this.residents = building.residents?.length > 0 ? building.residents.map(resident => new ViewUserBaseDTO(resident)) : [];
         this.issues = building.issues?.length > 0 ? building.issues.map(issue => new ViewIssueDTO(issue)) : [];
     }

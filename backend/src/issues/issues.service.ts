@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Issue, IssueStatus, IssueStatusEnum } from './issues.entity';
 import { CreateIssueDTO } from './DTOs/create-issue.dto';
-import { ViewIssueCurrentStatusDTO } from './DTOs/view-issue.dto';
+import { FilterIssueDTO, SearchIssueDTO } from './DTOs/filter-search.dto';
 
 @Injectable()
 export class IssuesService {
@@ -29,20 +29,29 @@ export class IssuesService {
             .getMany();
     }
 
-    async getAllIssues() {
-        return this.issueRepository.find({
-            relations: {
-                user: true,
-                building: true,
-                employeeResponsible: true,
-                statusHistory: {
-                    changedBy: true
-                },
-                pictures: {
-                    uploadedBy: true
-                }
-            }
-        })
+    async getAllIssues(page: number = 1, limit: number = 24): Promise<{ issues: Issue[], totalCount: number }> {
+        const queryBuilder = this.issueRepository
+            .createQueryBuilder('issue')
+            .leftJoinAndSelect('issue.user', 'user')
+            .leftJoinAndSelect('issue.building', 'building')
+            .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
+            .leftJoinAndSelect('issue.statusHistory', 'status')
+            .leftJoinAndSelect('status.changedBy', 'statusChanger')
+            .leftJoinAndSelect('issue.pictures', 'pictures')
+            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader');
+
+        queryBuilder.orderBy('issue.createdAt', 'DESC')
+            .addOrderBy('status.createdAt', 'DESC');
+
+        const totalCount = await queryBuilder.getCount();
+
+        const offset = (page - 1) * limit;
+        queryBuilder
+            .skip(offset)
+            .take(limit);
+
+        const issues = await queryBuilder.getMany();
+        return { issues, totalCount };
     }
 
     async createIssue(issueData: CreateIssueDTO): Promise<Issue> {
@@ -124,8 +133,8 @@ export class IssuesService {
                 .orderBy('status.createdAt', 'DESC')
                 .getOne();
         }
-        return await this.dataSource
-            .createQueryBuilder(Issue, 'issue')
+        return this.issueRepository
+            .createQueryBuilder('issue')
             .leftJoinAndSelect('issue.user', 'user')
             .leftJoinAndSelect('issue.building', 'building')
             .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
@@ -153,5 +162,89 @@ export class IssuesService {
                 }
             }
         })
+    }
+
+    async filterIssues(filterData: FilterIssueDTO) {
+        const queryBuilder = this.issueRepository
+            .createQueryBuilder('issue')
+            .leftJoinAndSelect('issue.user', 'user')
+            .leftJoinAndSelect('issue.building', 'building')
+            .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
+            .leftJoinAndSelect('issue.statusHistory', 'status')
+            .leftJoinAndSelect('status.changedBy', 'statusChanger')
+            .leftJoinAndSelect('issue.pictures', 'pictures')
+            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader');
+
+        if (filterData.status) {
+            queryBuilder.andWhere(
+                'status.id IN (SELECT MAX(s.id) FROM issue_status s WHERE s.issueId = issue.id AND s.status = :status)',
+                { status: filterData.status }
+            );
+        }
+        if (filterData.buildingID) {
+            queryBuilder.andWhere('building.id = :buildingId', { buildingId: filterData.buildingID });
+        }
+
+        if (filterData.employeeID) {
+            queryBuilder.andWhere('employeeResponsible.id = :employeeId', { employeeId: filterData.employeeID });
+        }
+
+        if (filterData.userID) {
+            queryBuilder.andWhere('user.id = :userId', { userId: filterData.userID });
+        }
+
+        if (filterData.dateFrom) {
+            queryBuilder.andWhere('issue.createdAt >= :dateFrom', { dateFrom: filterData.dateFrom });
+        }
+
+        if (filterData.dateTo) {
+            queryBuilder.andWhere('issue.createdAt <= :dateTo', { dateTo: filterData.dateTo });
+        }
+
+        queryBuilder.orderBy('issue.createdAt', 'DESC')
+            .addOrderBy('status.createdAt', 'DESC');
+
+        const totalCount = await queryBuilder.getCount();
+
+        if (filterData.page && filterData.limit) {
+            const offset = (filterData.page - 1) * filterData.limit;
+            queryBuilder
+                .skip(offset)
+                .take(filterData.limit);
+        }
+
+        const issues = await queryBuilder.getMany();
+        return { issues, totalCount };
+    }
+
+    async searchIssues(searchDto: SearchIssueDTO) {
+        const queryBuilder = this.issueRepository
+            .createQueryBuilder('issue')
+            .leftJoinAndSelect('issue.user', 'user')
+            .leftJoinAndSelect('issue.building', 'building')
+            .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
+            .leftJoinAndSelect('issue.statusHistory', 'status')
+            .leftJoinAndSelect('status.changedBy', 'statusChanger')
+            .leftJoinAndSelect('issue.pictures', 'pictures')
+            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader');
+
+        if (searchDto.searchTerm) {
+            queryBuilder.andWhere('issue.problemDescription ILIKE :searchTerm', { searchTerm: `%${searchDto.searchTerm}%` });
+        }
+
+        queryBuilder.orderBy('issue.createdAt', 'DESC')
+            .addOrderBy('status.createdAt', 'DESC');
+
+        const totalCount = await queryBuilder.getCount();
+
+        if (searchDto.page && searchDto.limit) {
+            const offset = (searchDto.page - 1) * searchDto.limit;
+            queryBuilder
+                .skip(offset)
+                .take(searchDto.limit);
+        }
+
+        const issues = await queryBuilder.getMany();
+        return { issues, totalCount };
     }
 }

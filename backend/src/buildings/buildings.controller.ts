@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, ValidationPipe, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, ValidationPipe, ParseUUIDPipe, UseGuards, Put } from '@nestjs/common';
 import { BuildingsService } from './buildings.service';
 import { CreateBuildingDTO } from './DTOs/create-building.dto';
 import { ViewBuildingDTO } from './DTOs/view-building.dto';
@@ -43,5 +43,12 @@ export class BuildingsController {
     @Delete()
     removeAllBuildings() {
         return this.buildingsService.removeAllBuildings();
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRoleEnum.MANAGER)
+    @Put('/:id/name')
+    updateBuilding(@Param('id', ParseUUIDPipe) id: string, @Body(ValidationPipe) updateData: { name: string }) {
+        return this.buildingsService.updateBuildingName(id, updateData.name);
     }
 }

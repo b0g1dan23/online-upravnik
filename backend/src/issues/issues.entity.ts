@@ -42,7 +42,7 @@ export class Issue {
     @OneToMany(() => IssuePicture, picture => picture.issue, { cascade: true })
     pictures: IssuePicture[];
 
-    @OneToMany(() => Notification, notification => notification.issue, { cascade: true, eager: true })
+    @OneToMany(() => Notification, notification => notification.issue, { cascade: true })
     notifications: Notification[];
 
     @Column({ default: () => 'CURRENT_TIMESTAMP' })

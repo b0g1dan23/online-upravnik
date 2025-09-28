@@ -9,7 +9,9 @@ import {
     UseGuards,
     ValidationPipe,
     InternalServerErrorException,
-    NotFoundException
+    NotFoundException,
+    Query,
+    ParseIntPipe
 } from '@nestjs/common';
 import { IssuesService } from './issues.service';
 import { IssuesGateway } from './issues.gateway';
@@ -27,6 +29,7 @@ import { UsersService } from 'src/users/users.service';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/custom-decorators/Roles';
 import { UserRoleEnum } from 'src/users/users.entity';
+import { FilterIssueDTO, SearchIssueDTO } from './DTOs/filter-search.dto';
 
 @Controller('issues')
 @UseGuards(JwtAuthGuard)
@@ -68,7 +71,9 @@ export class IssuesController {
     @Roles(UserRoleEnum.EMPLOYEE)
     async getAllIssuesForEmployee(@CurrentUser() user: JwtUser) {
         try {
-            const employee = await this.employeesService.findEmployeeById(user.id, ['issues']);
+            const employee = await this.employeesService.findEmployeeById(user.id, {
+                issues: true
+            });
             return employee.issues.map(issue => this.mapToCurrentStatusDto(issue));
         } catch (error) {
             throw new InternalServerErrorException(
@@ -80,15 +85,18 @@ export class IssuesController {
     @Get('/all')
     @UseGuards(RolesGuard)
     @Roles(UserRoleEnum.MANAGER)
-    async getAllIssuesForManager() {
-        try {
-            const issues = await this.issuesService.getAllIssues();
-            return issues.map(issue => this.mapToCurrentStatusDto(issue));
-        } catch (err) {
-            throw new InternalServerErrorException(
-                err.message || 'Failed to fetch manager issues'
-            );
-        }
+    async getAllIssuesForManager(@Query('page') page: number = 1, @Query('limit') limit: number = 24) {
+        const result = await this.issuesService.getAllIssues(page, limit);
+
+        return {
+            issues: result.issues.map(issue => this.mapToCurrentStatusDto(issue)),
+            pagination: {
+                page,
+                limit,
+                totalCount: result.totalCount,
+                totalPages: Math.ceil(result.totalCount / limit)
+            }
+        };
     }
 
     @Post()
@@ -193,6 +201,38 @@ export class IssuesController {
                 'Failed to update issue'
             );
         }
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles(UserRoleEnum.MANAGER)
+    @Get('/filter')
+    async filterIssues(@Query() filterDto: FilterIssueDTO) {
+        const filteredIssues = await this.issuesService.filterIssues(filterDto);
+        return {
+            issues: filteredIssues.issues.map(issue => this.mapToCurrentStatusDto(issue)),
+            pagination: {
+                page: filterDto.page!,
+                limit: filterDto.limit!,
+                totalCount: filteredIssues.totalCount,
+                totalPages: Math.ceil(filteredIssues.totalCount / filterDto.limit!)
+            }
+        }
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles(UserRoleEnum.MANAGER)
+    @Get('/search')
+    async searchIssues(@Query() searchDto: SearchIssueDTO) {
+        const searchResults = await this.issuesService.searchIssues(searchDto);
+        return {
+            issues: searchResults.issues.map(issue => this.mapToCurrentStatusDto(issue)),
+            pagination: {
+                page: searchDto.page!,
+                limit: searchDto.limit!,
+                totalCount: searchResults.totalCount,
+                totalPages: Math.ceil(searchResults.totalCount / searchDto.limit!)
+            }
+        };
     }
 
     @Get('/:issueId')

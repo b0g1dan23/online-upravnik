@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Building } from './buildings.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBuildingDTO } from './DTOs/create-building.dto';
 import { EmployeesService } from 'src/employees/employees.service';
@@ -12,13 +12,16 @@ export class BuildingsService {
         @InjectRepository(Building)
         private readonly buildingsRepository: Repository<Building>,
         private readonly employeesService: EmployeesService,
+        private readonly dataSource: DataSource
     ) { }
 
     async createBuilding(buildingData: CreateBuildingDTO) {
-        const building = this.buildingsRepository.create(buildingData);
-        building.employeeResponsible = await this.employeesService.findEmployeeById(buildingData.employeeResponsibleId);
-        const insertedBuilding = await this.buildingsRepository.save(building);
-        return new ViewBuildingDTO(insertedBuilding);
+        return await this.dataSource.transaction(async manager => {
+            const building = manager.create(Building, buildingData);
+            building.employeeResponsible = await this.employeesService.findEmployeeById(buildingData.employeeResponsibleId);
+            const insertedBuilding = await manager.save(building);
+            return new ViewBuildingDTO(insertedBuilding);
+        })
     }
 
     async findBuildings() {
@@ -47,16 +50,26 @@ export class BuildingsService {
     }
 
     async removeBuilding(id: string) {
-        const building = await this.findBuildingByID(id);
-        await this.buildingsRepository.remove(building);
-        return { message: "Building removed successfully" };
+        const deleteResult = await this.buildingsRepository.delete({ id });
+        if (deleteResult.affected === 0) {
+            throw new NotFoundException("Building with that ID not found!");
+        }
+        return { buildingID: id };
     }
 
     async removeAllBuildings() {
-        const buildings = await this.findBuildings();
-        buildings.forEach(async (building) => {
-            await this.buildingsRepository.remove(building);
-        });
+        const deleteResult = await this.buildingsRepository.delete({});
+        if (deleteResult.affected === 0) {
+            throw new NotFoundException("No buildings found to delete!");
+        }
         return { message: "All buildings removed successfully" };
+    }
+
+    async updateBuildingName(buildingID: string, newName: string) {
+        const updateResult = await this.buildingsRepository.update({ id: buildingID }, { name: newName });
+        if (updateResult.affected === 0) {
+            throw new NotFoundException("Building with that ID not found!");
+        }
+        return { buildingID, name: newName };
     }
 }

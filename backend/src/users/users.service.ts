@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateUserDTO } from './DTOs/create-user.dto';
 import { BuildingsService } from 'src/buildings/buildings.service';
 import { ViewUserBaseDTO } from './DTOs/view-user-base.dto';
@@ -12,23 +12,25 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-        private readonly jwtService: JwtService,
         private readonly buildingService: BuildingsService,
+        private readonly dataSource: DataSource
     ) { }
 
     async createUser(userData: CreateUserDTO) {
-        const existingUser = await this.userRepository.findOne({
-            where: { email: userData.email }
-        });
+        return await this.dataSource.transaction(async manager => {
+            const existingUser = await manager.findOne(User, {
+                where: { email: userData.email }
+            });
 
-        if (existingUser) {
-            throw new ConflictException('User with this email already exists');
-        }
+            if (existingUser) {
+                throw new ConflictException('User with this email already exists');
+            }
 
-        const user = this.userRepository.create(userData);
-        user.buildingLivingIn = await this.buildingService.findBuildingByID(userData.buildingLivingInID);
-        const savedUser = await this.userRepository.save(user);
-        return new ViewUserBaseDTO(savedUser);
+            const user = manager.create(User, userData);
+            user.buildingLivingIn = await this.buildingService.findBuildingByID(userData.buildingLivingInID);
+            const savedUser = await manager.save(user);
+            return new ViewUserBaseDTO(savedUser);
+        })
     }
 
     async findUserByEmail(email: string) {

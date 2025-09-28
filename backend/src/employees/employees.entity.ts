@@ -16,6 +16,6 @@ export class Employee extends User {
     @OneToMany(() => Building, building => building.employeeResponsible)
     buildings: Building[]
 
-    @OneToMany(() => Issue, issue => issue.employeeResponsible)
+    @OneToMany(() => Issue, issue => issue.employeeResponsible, { eager: true })
     issuesAssigned: Issue[];
 }
