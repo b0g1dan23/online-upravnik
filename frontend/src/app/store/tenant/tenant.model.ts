@@ -1,8 +1,5 @@
+import { Employee } from "../employee/employee.model";
 import { Building, User } from "../user/user.model";
-
-export interface Employee extends User {
-    position: string;
-}
 
 export enum IssueStatusEnum {
     REPORTED = 'REPORTED',
@@ -30,4 +27,8 @@ export interface Issue {
 
 export interface CreateIssueDTO {
     problemDescription: string;
+}
+
+export interface IssueDetails extends Omit<Issue, 'currentStatus'> {
+    statusHistory: IssueStatus[];
 }
