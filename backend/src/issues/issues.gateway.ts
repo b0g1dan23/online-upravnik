@@ -97,7 +97,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
             if (clientInfo) {
                 clientInfo.userID = userID;
                 clientInfo.buildingID = undefined;
-                clientInfo.userRole = UserRoleEnum.EMPLOYEE;
+                clientInfo.userRole = UserRoleEnum.MANAGER;
                 this.clients.set(client, clientInfo);
             }
 

@@ -3,14 +3,15 @@ import { inject, Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
 import { ManagerActions } from "./manager.actions";
-import { catchError, map, mergeMap, of } from "rxjs";
+import { catchError, map, mergeMap, of, withLatestFrom } from "rxjs";
 import { Issue } from "../tenant/tenant.model";
 import { PaginationResponse } from "./manager.model";
-import { Employee } from "../employee/employee.model";
-import { Building } from "../user/user.model";
+import { Employee, EmployeeDetails } from "../employee/employee.model";
+import { BuildingExpanded } from "../user/user.model";
+import { selectIssuesState } from "./manager.selectors";
 
 @Injectable()
-export class TenantEffects {
+export class ManagerEffects {
     actions$ = inject(Actions)
     http = inject(HttpClient);
     store = inject(Store);
@@ -21,31 +22,24 @@ export class TenantEffects {
 
     constructor() { }
 
-    loadFirstPage$ = createEffect(() => {
+    loadIssues$ = createEffect(() => {
         return this.actions$.pipe(
-            ofType(ManagerActions["[Issue]LoadFirstPageForManager"]),
-            mergeMap(() => this.http.get<{ issues: Issue[], pagination: PaginationResponse }>(`${this.issuesURL}/all`, {
-                withCredentials: true
-            })
-                .pipe(
-                    map(({ issues, pagination }) => ManagerActions["[Issue]LoadFirstPageForManagerSuccess"]({ issues, pagination })),
-                    catchError(error => of(ManagerActions["[Issue]LoadFirstPageForManagerFailure"]({ error })))
-                ))
-        )
-    })
-
-    loadMoreIssues$ = createEffect(() => {
-        return this.actions$.pipe(
-            ofType(ManagerActions["[Issue]LoadMoreIssuesForManager"]),
-            mergeMap(({ page }) => this.http.get<{ issues: Issue[], pagination: PaginationResponse }>(`${this.issuesURL}/all`, {
-                params: {
-                    page: page.toString()
-                },
-                withCredentials: true
-            }).pipe(
-                map(({ issues, pagination }) => ManagerActions["[Issue]LoadMoreIssuesForManagerSuccess"]({ issues, pagination })),
-                catchError(error => of(ManagerActions["[Issue]LoadMoreIssuesForManagerFailure"]({ error })))
-            ))
+            ofType(ManagerActions["[Issue]LoadIssues"]),
+            withLatestFrom(this.store.select(selectIssuesState)),
+            mergeMap(([_, { currentPage }]) => {
+                const nextPage = currentPage + 1;
+                const isFirstPage = currentPage === 0;
+                return this.http.get<{ issues: Issue[], pagination: PaginationResponse }>(`${this.issuesURL}/all`, {
+                    params: {
+                        page: nextPage.toString()
+                    },
+                    withCredentials: true
+                }).pipe(
+                    map(({ issues, pagination }) => ManagerActions["[Issue]LoadIssuesSuccess"]({ issues, pagination, isFirstPage })),
+                    catchError(error => of(ManagerActions["[Issue]LoadIssuesFailure"]({ error })))
+                )
+            }
+            )
         )
     })
 
@@ -64,7 +58,7 @@ export class TenantEffects {
     loadEachEmployeeByID$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ManagerActions["[Employee]LoadEmployeeByID"]),
-            mergeMap(({ employeeID }) => this.http.get<Employee>(`${this.employeesURL}/${employeeID}`, {
+            mergeMap(({ employeeID }) => this.http.get<EmployeeDetails>(`${this.employeesURL}/${employeeID}`, {
                 withCredentials: true
             }).pipe(
                 map(employee => ManagerActions["[Employee]LoadEmployeeByIDSuccess"]({ employee })),
@@ -112,7 +106,7 @@ export class TenantEffects {
     loadAllBuildings$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ManagerActions["[Building]LoadAllBuildings"]),
-            mergeMap(() => this.http.get<Building[]>(`${this.buildingsURL}`, {
+            mergeMap(() => this.http.get<BuildingExpanded[]>(`${this.buildingsURL}`, {
                 withCredentials: true
             }).pipe(
                 map(buildings => ManagerActions["[Building]LoadAllBuildingsSuccess"]({ buildings })),
@@ -124,7 +118,10 @@ export class TenantEffects {
     reassingEmployeeToBuilding$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ManagerActions["[Building]ReassingEmployeeToBuilding"]),
-            mergeMap(({ buildingID, employeeID }) => this.http.put<Building>(`${this.employeesURL}/reassign/${buildingID}/${employeeID}`, {
+            mergeMap(({ buildingID, employeeID }) => this.http.patch<BuildingExpanded>(`${this.employeesURL}/reassign`, {
+                buildingID,
+                newEmployeeID: employeeID
+            }, {
                 withCredentials: true
             }).pipe(
                 map(building => ManagerActions["[Building]ReassingEmployeeToBuildingSuccess"]({ building })),
@@ -157,10 +154,22 @@ export class TenantEffects {
         )
     })
 
+    returnInactiveBuildingToActive$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(ManagerActions["[Building]ReturnInactiveBuildingToActive"]),
+            mergeMap(({ buildingID }) => this.http.put<{ buildingID: string }>(`${this.buildingsURL}/${buildingID}/activate`, {}, {
+                withCredentials: true
+            }).pipe(
+                map(({ buildingID }) => ManagerActions["[Building]ReturnInactiveBuildingToActiveSuccess"]({ buildingID })),
+                catchError(error => of(ManagerActions["[Building]ReturnInactiveBuildingToActiveFailure"]({ error })))
+            ))
+        )
+    })
+
     addBuilding$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ManagerActions["[Building]AddBuilding"]),
-            mergeMap(({ name }) => this.http.post<Building>(`${this.buildingsURL}`, { name }, {
+            mergeMap(({ name, address, employeeResponsibleId }) => this.http.post<BuildingExpanded>(`${this.buildingsURL}`, { name, address, employeeResponsibleId }, {
                 withCredentials: true
             }).pipe(
                 map(building => ManagerActions["[Building]AddBuildingSuccess"]({ building })),

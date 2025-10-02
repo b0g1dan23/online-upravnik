@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { Employee } from "../employee/employee.model";
+import { Issue } from "../tenant/tenant.model";
 
 export interface LoginDto {
     email: string;
@@ -25,7 +26,14 @@ export interface Building {
     id: string;
     name: string;
     address: string;
-    employeeResponsible: Employee | null;
+    employeeResponsible: Employee;
+    isActive: boolean;
+    deletedAt: Date | null;
+}
+
+export interface BuildingExpanded extends Building {
+    issues: Issue[];
+    residents: User[];
 }
 
 export interface User {
@@ -35,7 +43,9 @@ export interface User {
     email: string;
     phoneNumber: string;
     role: UserRoleEnum;
-    buildingLivingInID: Building | null;
+    buildingLivingInID: Building;
+    isActive: boolean;
+    deletedAt: Date | null;
 }
 
 export interface NestError {

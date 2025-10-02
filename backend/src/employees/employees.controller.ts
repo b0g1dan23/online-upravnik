@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, UseGuards, ValidationPipe } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDTO } from './DTOs/create-employee.dto';
 import { Roles } from 'src/custom-decorators/Roles';
@@ -6,6 +6,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserRoleEnum } from 'src/users/users.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { ViewEmployeeDTO } from './DTOs/view-employee.dto';
+import { ViewBuildingBaseDTO, ViewBuildingDTO } from 'src/buildings/DTOs/view-building.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRoleEnum.MANAGER)
@@ -21,6 +22,11 @@ export class EmployeesController {
     @Get()
     findEmployees() {
         return this.employeesService.findEmployees();
+    }
+
+    @Get('/active')
+    findActiveEmployees() {
+        return this.employeesService.findActiveEmployees();
     }
 
     @Get('/:employeeID')
@@ -43,11 +49,10 @@ export class EmployeesController {
         return this.employeesService.deleteEmployee(employeeID);
     }
 
-    @Put('/reassign/:buildingID/:newEmployeeID')
+    @Patch('/reassign')
     async reassignEmployeeForBuilding(
-        @Param('buildingID', ParseUUIDPipe) buildingID: string,
-        @Param('newEmployeeID', ParseUUIDPipe) newEmployeeID: string
+        @Body(ValidationPipe) body: { buildingID: string, newEmployeeID: string },
     ) {
-        return this.employeesService.reassignEmployeeForBuilding(buildingID, newEmployeeID);
+        return new ViewBuildingDTO(await this.employeesService.reassignEmployeeForBuilding(body.buildingID, body.newEmployeeID));
     }
 }

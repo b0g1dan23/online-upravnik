@@ -32,6 +32,11 @@ export class EmployeesService {
         return employees.map(employee => new SimpleViewEmployeeDTO(employee));
     }
 
+    async findActiveEmployees() {
+        const employees = await this.employeesRepository.find({ where: { isActive: true } });
+        return employees.map(employee => new SimpleViewEmployeeDTO(employee));
+    }
+
     async updateEmployee(employeeID: string, updateData: Partial<CreateEmployeeDTO>) {
         return await this.dataSource.transaction(async manager => {
             const updateResult = await manager.update(Employee, { id: employeeID }, updateData);
@@ -44,8 +49,8 @@ export class EmployeesService {
     }
 
     async deleteEmployee(employeeID: string) {
-        const deleteResult = await this.employeesRepository.delete({ id: employeeID });
-        if (deleteResult.affected === 0) {
+        const updateResult = await this.employeesRepository.update({ id: employeeID }, { isActive: false, deletedAt: new Date() });
+        if (updateResult.affected === 0) {
             throw new NotFoundException("Employee with that ID not found!");
         }
         return { employeeID };
@@ -55,6 +60,9 @@ export class EmployeesService {
         const employee = await this.employeesRepository.findOne({ where: { id }, relations });
         if (!employee) {
             throw new NotFoundException("Employee with that ID not found!");
+        }
+        if (!employee.isActive) {
+            throw new NotFoundException("Employee with that ID is not active!");
         }
         return employee;
     }
@@ -87,7 +95,7 @@ export class EmployeesService {
                 where: { id: buildingId },
                 relations: { employeeResponsible: true }
             })
-            const newEmployee = await manager.findOne(Employee, { where: { id: newEmployeeID } });
+            const newEmployee = await manager.findOne(Employee, { where: { id: newEmployeeID, isActive: true } });
             if (!building) {
                 throw new NotFoundException("Building with that ID not found!");
             }
@@ -95,10 +103,10 @@ export class EmployeesService {
                 throw new NotFoundException("Employee with that ID not found!");
             }
 
-            building.employeeResponsible = newEmployee;
-            const savedBuilding = await manager.save(building);
+            await manager.update(Building, { id: buildingId }, { employeeResponsible: newEmployee });
+            const savedBuilding = await manager.findOne(Building, { where: { id: buildingId }, relations: { employeeResponsible: true, issues: true } });
 
-            return savedBuilding;
+            return savedBuilding!;
         });
     }
 }

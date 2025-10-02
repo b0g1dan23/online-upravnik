@@ -1,0 +1,64 @@
+<div class="flex items-center justify-between !mb-2">
+    <h2>Pregled svih aktivnih zaposlenih</h2>
+    <button (click)="showAddModal()" class="!py-1 !px-2 border-1 border-orange-400 rounded-lg cursor-pointer 
+        hover:bg-orange-200 hover:text-orange-900 hover:shadow-lg transition-all duration-200 ease-in-out
+        flex items-center gap-1">
+        <lucide-angular [img]="Plus" size="20"></lucide-angular> Dodaj novog zaposlenog</button>
+</div>
+
+@if (activeEmployees$ | async; as activeEmployees) {
+@if(activeEmployees.length > 0) {
+<ul class="grid grid-cols-3 gap-4">
+    @for (employee of activeEmployees; track employee.id) {
+    <app-single-employee [employee]="employee" [showSelectedEmployee]="showSelectedEmployee"></app-single-employee>
+    }
+</ul>
+}@else {
+<p class="text-center text-gray-500 mt-10">Nema aktivnih zaposlenih.</p>
+}
+}
+
+<div class="flex items-center justify-between !my-2">
+    <h2>Pregled svih neaktivnih zaposlenih</h2>
+</div>
+
+@if (inactiveEmployees$ | async; as inactiveEmployees) {
+@if(inactiveEmployees.length > 0) {
+<ul class="grid grid-cols-3 gap-4">
+    @for (employee of inactiveEmployees; track employee.id) {
+    <app-single-employee [employee]="employee" [showSelectedEmployee]="showSelectedEmployee"></app-single-employee>
+    }
+</ul>
+}@else {
+<p class="text-center text-gray-500 mt-10">Nema neaktivnih zaposlenih.</p>
+}
+}
+
+@if(showModal$ | async) {
+<app-modal (closed)="closeSelectedEmployeeModal()">
+    @if(selectedEmployee$ | async; as selectedEmployee) {
+    <h2>Podaci o zaposlenom</h2>
+    <p>Ime: {{ selectedEmployee.firstName + " " + selectedEmployee.lastName }}</p>
+    <p>Email: <a [href]="'mailto:' + selectedEmployee.email" class="hover:underline">{{selectedEmployee.email}}</a></p>
+    <p>Broj telefona: <a [href]="'tel:' + selectedEmployee.phoneNumber"
+            class="hover:underline">{{selectedEmployee.phoneNumber}}</a></p>
+    <p>Pozicija: {{selectedEmployee.position}}</p>
+    <span>Dodeljeni kvarovi ({{selectedEmployee.issuesAssigned.length}}):</span>
+    <ul class="grid gap-2 grid-cols-3">
+        @for (issue of selectedEmployee.issuesAssigned; track issue.id) {
+        <app-single-issue [issue]="issue"></app-single-issue>
+        }
+    </ul>
+    <span>Zgrade kojima je dodeljen ({{selectedEmployee.buildings.length}}):</span>
+    <ul class="grid gap-2 grid-cols-3">
+        @for (building of selectedEmployee.buildings; track building.id) {
+        <app-single-building [building]="building"></app-single-building>
+        }
+    </ul>
+    }
+</app-modal>
+}@else if (showAddEmployeeModal$ | async) {
+<app-modal (closed)="closeAddModal()">
+    <app-add-employee (closed)="closeAddModal()" (closeModal)="closeAddModal()"></app-add-employee>
+</app-modal>
+}

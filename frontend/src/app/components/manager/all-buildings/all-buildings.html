@@ -1,0 +1,44 @@
+<div class="flex items-center justify-between gap-4">
+    <h2 class="!mb-2">Pregled svih aktivnih zgrada</h2>
+    <button class="!py-1 !px-2 border-1 border-orange-400 rounded-lg cursor-pointer 
+        hover:bg-orange-200 hover:text-orange-900 hover:shadow-lg transition-all duration-200 ease-in-out
+        flex items-center gap-1" (click)="toggleAddBuildingModal()">
+        <lucide-angular [img]="Building" size="20"></lucide-angular> Dodaj novu zgradu</button>
+</div>
+
+@if (activeBuildings$ | async; as activeBuildings) {
+@if(activeBuildings.length > 0){
+<ul class="grid grid-cols-3 max-md:grid-cols-2 gap-4 max-sm:grid-cols-1">
+    @for (item of activeBuildings; track $index) {
+    <app-single-building [building]="item" [removable]="true" [editable]="true"></app-single-building>
+    }
+</ul>
+}
+@else {
+<p class="text-center text-gray-500 mt-10">Nema aktivnih zgrada.</p>
+<p class="text-center text-gray-500 mt-10">Dodajte novu zgradu klikom na dugme ispod.</p>
+<app-button class="table !mx-auto" (click)="toggleAddBuildingModal()">
+    Dodaj zgradu
+</app-button>
+}
+}
+
+<h2 class="!mb-2">Pregled svih neaktivnih zgrada</h2>
+@if (inactiveBuildings$ | async; as inactiveBuildings) {
+@if(inactiveBuildings.length > 0){
+<ul class="grid grid-cols-3 max-md:grid-cols-2 gap-4 max-sm:grid-cols-1">
+    @for (item of inactiveBuildings; track $index) {
+    <app-single-building [building]="item" [isInactive]="true"></app-single-building>
+    }
+</ul>
+}
+@else {
+<p class="text-center text-gray-500 mt-10">Nema neaktivnih zgrada.</p>
+}
+}
+
+@if(showAddModal | async){
+<app-modal (closed)="toggleAddBuildingModal()">
+    <app-add-building (closeModal)="toggleAddBuildingModal()"></app-add-building>
+</app-modal>
+}

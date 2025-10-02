@@ -6,6 +6,7 @@ export const initialManagerState: ManagerState = {
     issues: {
         items: [],
         pagination: null,
+        currentPage: 0,
         selectedIssue: null,
         loading: false,
         loadingMore: false,
@@ -43,20 +44,14 @@ export const initialManagerState: ManagerState = {
 
 export const managerReducer = createReducer(
     initialManagerState,
-    on(ManagerActions["[Issue]LoadFirstPageForManager"], (state) => ({ ...state, issues: { ...state.issues, loading: true, error: null } })),
-    on(ManagerActions["[Issue]LoadFirstPageForManagerSuccess"], (state, { issues, pagination }) => ({ ...state, issues: { ...state.issues, items: issues, pagination, loading: false } })),
-    on(ManagerActions["[Issue]LoadFirstPageForManagerFailure"], (state, { error }) => ({ ...state, issues: { ...state.issues, loading: false, error } })),
-
-    on(ManagerActions["[Issue]LoadMoreIssuesForManager"], (state) => ({ ...state, issues: { ...state.issues, loadingMore: true, error: null } })),
-    on(ManagerActions["[Issue]LoadMoreIssuesForManagerSuccess"], (state, { issues, pagination }) => ({
+    on(ManagerActions["[Issue]LoadIssues"], (state) => ({ ...state, issues: { ...state.issues, loading: true, error: null } })),
+    on(ManagerActions["[Issue]LoadIssuesSuccess"], (state, { issues, pagination, isFirstPage }) => ({
         ...state, issues: {
-            ...state.issues, items: [...state.issues.items, ...issues], pagination
+            ...state.issues, items: isFirstPage ? issues : [...state.issues.items, ...issues], pagination, currentPage: pagination.page, hasMorePages: pagination.page < pagination.totalPages, loading: false
         }
     })),
-    on(ManagerActions["[Issue]LoadMoreIssuesForManagerFailure"], (state, { error }) => ({
-        ...state,
-        issues: { ...state.issues, loadingMore: false, error }
-    })),
+    on(ManagerActions["[Issue]LoadIssuesFailure"], (state, { error }) => ({ ...state, issues: { ...state.issues, loading: false, error } })),
+    on(ManagerActions["[Issue]ResetIssues"], (state) => ({ ...state, issues: { ...initialManagerState.issues } })),
 
     on(ManagerActions["[Employee]LoadAllEmployees"], (state) => ({ ...state, employees: { ...state.employees, loading: true, error: null } })),
     on(ManagerActions["[Employee]LoadAllEmployeesSuccess"], (state, { employees }) => ({ ...state, employees: { ...state.employees, items: employees, loading: false } })),
@@ -84,7 +79,7 @@ export const managerReducer = createReducer(
     on(ManagerActions["[Employee]DeleteEmployeeSuccess"], (state, { employeeID }) => ({
         ...state, employees: {
             ...state.employees,
-            items: state.employees.items.filter(emp => emp.id !== employeeID),
+            items: state.employees.items.map(emp => emp.id === employeeID ? ({ ...emp, isActive: false }) : emp),
             loading: false
         }
     })),
@@ -108,9 +103,15 @@ export const managerReducer = createReducer(
 
     on(ManagerActions["[Building]DeleteBuilding"], (state) => ({ ...state, buildings: { ...state.buildings, loading: true, error: null } })),
     on(ManagerActions["[Building]DeleteBuildingSuccess"], (state, { buildingID }) => ({
-        ...state, buildings: { ...state.buildings, items: state.buildings.items.filter(bld => bld.id !== buildingID), loading: false }
+        ...state, buildings: { ...state.buildings, items: state.buildings.items.map((b) => b.id === buildingID ? { ...b, isActive: false } : b), loading: false }
     })),
     on(ManagerActions["[Building]DeleteBuildingFailure"], (state, { error }) => ({ ...state, buildings: { ...state.buildings, loading: false, error } })),
+
+    on(ManagerActions["[Building]ReturnInactiveBuildingToActive"], (state) => ({ ...state, buildings: { ...state.buildings, loading: true, error: null } })),
+    on(ManagerActions["[Building]ReturnInactiveBuildingToActiveSuccess"], (state, { buildingID }) => ({
+        ...state, buildings: { ...state.buildings, items: state.buildings.items.map((b) => b.id === buildingID ? { ...b, isActive: true } : b), loading: false }
+    })),
+    on(ManagerActions["[Building]ReturnInactiveBuildingToActiveFailure"], (state, { error }) => ({ ...state, buildings: { ...state.buildings, loading: false, error } })),
 
     on(ManagerActions["[Building]AddBuilding"], (state) => ({ ...state, buildings: { ...state.buildings, loading: true, error: null } })),
     on(ManagerActions["[Building]AddBuildingSuccess"], (state, { building }) => ({ ...state, buildings: { ...state.buildings, items: [...state.buildings.items, building], loading: false } })),

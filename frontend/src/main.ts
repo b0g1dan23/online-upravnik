@@ -15,6 +15,7 @@ bootstrapApplication(App, {
         duration: 3000,
         horizontalPosition: 'right',
         verticalPosition: 'top',
+        panelClass: ['snackbar-custom']
       }
     },
     ...appConfig.providers,

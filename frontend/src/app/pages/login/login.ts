@@ -176,7 +176,6 @@ export class Login implements OnInit, OnDestroy {
 
       this.store.dispatch(UserActions['[Auth]Login']({ dto: loginData }));
     } else {
-      console.log("Login forma nije validna");
       this.markFormGroupTouched(this.loginForm);
     }
   }
@@ -188,7 +187,6 @@ export class Login implements OnInit, OnDestroy {
 
       this.store.dispatch(UserActions['[Auth]Register']({ dto: dataToSend }));
     } else {
-      console.log("Register forma nije validna");
       this.markFormGroupTouched(this.registerForm);
     }
   }

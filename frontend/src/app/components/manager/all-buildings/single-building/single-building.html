@@ -1,0 +1,54 @@
+<app-card class="relative">
+    <div [ariaDisabled]="isExpandedBuilding() && !building.employeeResponsible.isActive">
+        <h2>{{building.name ? building.name : building.address}}</h2>
+        @if(isExpandedBuilding()){
+        <p>Zaposleni zaduzen: {{building.employeeResponsible.firstName + " " + building.employeeResponsible.lastName}}
+        </p>
+        <p>Broj nerešenih kvarova: <span [ngClass]="{
+        'text-green-600': unResolvedIssuesCount === 0,
+        'text-yellow-600': unResolvedIssuesCount > 0 && unResolvedIssuesCount <= 3,
+        'text-red-600': unResolvedIssuesCount > 3
+    }">{{unResolvedIssuesCount}}</span></p>
+        <p>Broj stanara u zgradi: {{building.residents.length}}</p>
+        <div class="absolute top-1 right-1 text-sm flex items-center gap-1">
+            @if(editable){
+            <button class="border-1 !p-1 rounded-md bg-orange-200 border-orange-600 text-orange-600"
+                (click)="showEditNameModal()">
+                <lucide-icon [img]="Pencil" size="20"></lucide-icon>
+            </button>
+            }
+            @if(removable){
+            <button class="border-1 !p-1 rounded-md bg-red-200 border-red-600 text-red-600" (click)="deleteBuilding()">
+                <lucide-icon [img]="Trash" size="20"></lucide-icon>
+            </button>
+            }
+        </div>
+        }
+    </div>
+    @if(isInactive){
+    <app-button (click)="returnToActive()">
+        Vrati u aktivne
+    </app-button>
+    }
+    @if(building.employeeResponsible && !building.employeeResponsible.isActive){
+    <p class="text-red-600 font-bold text-center">Zaposleni nije aktivan!</p>
+    <p>Potrebno je dodeliti novog zaposlenog.</p>
+    <app-button (click)="navigateToReassign()">
+        Dodeli novog zaposlenog
+    </app-button>
+    }
+    @else if (!building.employeeResponsible) {
+    <hr>
+    <p class="text-red-600 font-bold text-center">Nema dodeljenog zaposlenog!</p>
+    <p>Potrebno je dodeliti zaposlenog.</p>
+    <app-button (click)="navigateToReassign()">
+        Dodeli zaposlenog
+    </app-button>
+    }
+</app-card>
+
+@if (showModal$ | async) {
+<!-- TODO -->
+<app-modal (closed)="closeEditNameModal()">
+</app-modal>
+}

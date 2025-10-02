@@ -1,0 +1,44 @@
+<h2>Dodaj novu zgradu</h2>
+<form class="grid gap-2" (submit)="handleSubmit($event)">
+    <div class="flex align-center items-center justify-between gap-2">
+        <label for="name">Naziv zgrade (opciono):</label>
+        <input class="border-1 border-orange-400 max-w-[250px] !p-1 !px-2 w-full rounded-md" id="name" type="text"
+            placeholder="Unesite naziv zgrade" [value]="building().name" (input)="updateField('name',$event)">
+    </div>
+
+    <div class="">
+        <div class="flex align-center items-center justify-between gap-2">
+            <label for="address">Adresa:</label>
+            <input class="border-1 border-orange-400 max-w-[250px] !p-1 !px-2 w-full rounded-md" id="address"
+                type="text" placeholder="Unesite adresu zgrade" required [value]="building().address"
+                (input)="updateField('address',$event)">
+        </div>
+        @if(!building().address && building().address !== '') {
+        <p class="text-sm text-red-700 text-end">Adresa je obavezna</p>
+        }
+    </div>
+
+    <div class="">
+        <div class="flex align-center items-center justify-between gap-2">
+            <label for="employee">Odgovorni zaposleni:</label>
+            <select id="employee" class="border-1 border-orange-400 max-w-[250px] !p-1 !px-2 w-full rounded-md" required
+                [value]="building().employeeResponsibleId" (change)="updateField('employeeResponsibleId',$event)">
+                <option value="">Odaberite zaposlenog</option>
+                @for(employee of activeEmployees(); track $index) {
+                <option [value]="employee.id">
+                    {{ employee.firstName }} {{ employee.lastName }}
+                </option>
+                }
+            </select>
+        </div>
+        @if(!building().employeeResponsibleId) {
+        <p class="text-sm text-red-700 text-end">Odgovorni zaposleni je obavezan</p>
+        }
+    </div>
+
+    <div class="!mt-6">
+        <app-button type="submit">
+            Dodaj zgradu
+        </app-button>
+    </div>
+</form>

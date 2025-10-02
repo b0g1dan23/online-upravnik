@@ -11,12 +11,11 @@ import {
     InternalServerErrorException,
     NotFoundException,
     Query,
-    ParseIntPipe
 } from '@nestjs/common';
 import { IssuesService } from './issues.service';
 import { IssuesGateway } from './issues.gateway';
 import { ViewIssueCurrentStatusDTO, ViewIssueDTO } from './DTOs/view-issue.dto';
-import { Issue, IssueStatusEnum } from './issues.entity';
+import { Issue } from './issues.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../custom-decorators/CurrentUser';
 import type { JwtUser } from '../auth/interfaces/jwt-user.interface';

@@ -1,0 +1,43 @@
+<h2>Dodaj novog zaposlenog</h2>
+<form (submit)="handleSubmit($event)" class="grid gap-2 !mt-1">
+    <div class="flex items-center justify-between text-nowrap gap-2">
+        <label for="firstName">Ime:</label>
+        <input type="text" name="firstName" id="firstName" placeholder="Unesite ime zaposlenog"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().firstName"
+            (input)="updateField('firstName', $event)" />
+    </div>
+    <div class=" flex items-center justify-between text-nowrap gap-2">
+        <label for="lastName">Prezime:</label>
+        <input type="text" name="lastName" id="lastName" placeholder="Unesite prezime zaposlenog"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().lastName"
+            (input)="updateField('lastName', $event)" />
+    </div>
+    <div class="flex items-center justify-between text-nowrap gap-2">
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" placeholder="Unesite email zaposlenog"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().email"
+            (input)="updateField('email', $event)" />
+    </div>
+    <div class="flex items-center justify-between text-nowrap gap-2">
+        <label for="phoneNumber">Broj telefona:</label>
+        <input type="tel" name="phoneNumber" id="phoneNumber" placeholder="Unesite broj telefona zaposlenog"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().phoneNumber"
+            (input)="updateField('phoneNumber', $event)" />
+    </div>
+    <div class="flex items-center justify-between text-nowrap gap-2">
+        <label for="password">Sifra:</label>
+        <input type="password" name="password" id="password" placeholder="Unesite sifru zaposlenog"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().password"
+            (input)="updateField('password', $event)" />
+    </div>
+    <div class="flex items-center justify-between text-nowrap gap-2">
+        <label for="position">Pozicija:</label>
+        <input type="text" name="position" id="position" placeholder="Unesite poziciju"
+            class="max-w-[300px] w-full !px-2 !py-1 border border-gray-300 rounded" [value]="employee().position"
+            (input)="updateField('position', $event)" />
+    </div>
+    <button type="submit" class="bg-orange-400 rounded-md text-neutral-900 font-semibold !py-2 cursor-pointer 
+        hover:bg-orange-500 hover:translate-y-[-2px] duration-300 transition-all ease-in-out">
+        Kreiraj zaposlenog
+    </button>
+</form>

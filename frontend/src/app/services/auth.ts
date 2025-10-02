@@ -11,9 +11,7 @@ import { selectUser, selectUserRole } from '../store/user/user.selectors';
 export class AuthService {
   private store = inject(Store);
 
-  constructor() {
-    this.loadUserFromCookie();
-  }
+  constructor() { }
 
   login(dto: LoginDto) {
     this.store.dispatch(UserActions['[Auth]Login']({ dto }));

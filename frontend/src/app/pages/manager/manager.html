@@ -1,0 +1,6 @@
+@if (manager$ | async; as manager) {
+<div class="grid gap-4">
+    <h1>Dobrodošli, {{ manager.firstName + " " + manager.lastName }}!</h1>
+    <app-all-issues></app-all-issues>
+</div>
+}

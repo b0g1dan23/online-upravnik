@@ -1,6 +1,6 @@
 import { ViewUserBaseDTO } from "src/users/DTOs/view-user-base.dto";
 import { Issue, IssuePicture, IssuePictureType, IssueStatus, IssueStatusEnum } from "../issues.entity";
-import { ViewEmployeeDTO } from "src/employees/DTOs/view-employee.dto";
+import { SimpleViewEmployeeDTO, ViewEmployeeDTO } from "src/employees/DTOs/view-employee.dto";
 import { ViewBuildingBaseDTO } from "src/buildings/DTOs/view-building.dto";
 
 export class ViewIssueDTO {
@@ -19,7 +19,7 @@ export class ViewIssueDTO {
         this.user = issue.user ? new ViewUserBaseDTO(issue.user) : undefined;
         this.building = issue.building ? new ViewBuildingBaseDTO(issue.building) : undefined;
         this.employeeResponsible = issue.employeeResponsible ? new ViewEmployeeDTO(issue.employeeResponsible) : undefined;
-        this.statusHistory = issue.statusHistory && issue.statusHistory.length > 0 ? issue.statusHistory.map(status => new ViewIssueStatusDTO(status)) : undefined;
+        this.statusHistory = issue.statusHistory && issue.statusHistory.length > 0 ? issue.statusHistory.map(status => new ViewIssueStatusDTO(status)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()) : undefined;
         this.createdAt = issue.createdAt;
     }
 }
@@ -41,6 +41,26 @@ export class ViewIssueCurrentStatusDTO {
         this.building = new ViewBuildingBaseDTO(issue.building);
         this.employeeResponsible = new ViewEmployeeDTO(issue.employeeResponsible);
         this.currentStatus = issue.statusHistory.map(status => new ViewIssueStatusDTO(status)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+        this.createdAt = issue.createdAt;
+    }
+}
+
+export class ViewIssueForBuildingDTO {
+    id: string;
+    problemDescription: string;
+    user?: ViewUserBaseDTO;
+    employeeResponsible?: SimpleViewEmployeeDTO;
+    currentStatus?: ViewIssueStatusDTO;
+    createdAt: Date;
+
+    constructor(issue: Issue) {
+        this.id = issue.id;
+        this.problemDescription = issue.problemDescription;
+        this.user = issue.user ? new ViewUserBaseDTO(issue.user) : undefined;
+        this.employeeResponsible = issue.employeeResponsible ? new SimpleViewEmployeeDTO(issue.employeeResponsible) : undefined;
+        this.currentStatus = issue.statusHistory?.length > 0
+            ? issue.statusHistory.map(status => new ViewIssueStatusDTO(status)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+            : undefined;
         this.createdAt = issue.createdAt;
     }
 }

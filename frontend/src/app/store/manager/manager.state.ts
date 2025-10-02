@@ -1,12 +1,13 @@
-import { Employee } from "../employee/employee.model";
+import { Employee, EmployeeDetails } from "../employee/employee.model";
 import { Issue } from "../tenant/tenant.model";
-import { Building, NestError } from "../user/user.model";
+import { Building, BuildingExpanded, NestError } from "../user/user.model";
 import { FilterOptions, PaginationResponse } from "./manager.model";
 
 export interface ManagerState {
     issues: {
         items: Issue[];
         pagination: PaginationResponse | null;
+        currentPage: number;
         selectedIssue: Issue | null;
         loading: boolean;
         loadingMore: boolean;
@@ -16,14 +17,14 @@ export interface ManagerState {
 
     employees: {
         items: Employee[];
-        selectedEmployee: Employee | null;
+        selectedEmployee: EmployeeDetails | null;
         loading: boolean;
         error: NestError | null;
     };
 
     buildings: {
-        items: Building[];
-        selectedBuilding: Building | null;
+        items: BuildingExpanded[];
+        selectedBuilding: BuildingExpanded | null;
         loading: boolean;
         error: NestError | null;
     };

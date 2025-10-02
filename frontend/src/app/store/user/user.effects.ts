@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { mergeMap, map, catchError, of, switchMap, takeUntil, filter, take } from 'rxjs';
+import { mergeMap, map, catchError, of, switchMap, takeUntil, filter, take, tap } from 'rxjs';
 import { UserActions } from './user.actions';
 import { HttpClient } from '@angular/common/http';
 import { User, UserRoleEnum } from './user.model';
@@ -9,9 +9,14 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { TenantActions } from '../tenant/tenant.actions';
 import { Store } from '@ngrx/store';
 import { selectUser } from './user.selectors';
+import { Router } from '@angular/router';
+import { EmployeeActions } from '../employee/employee.actions';
+import { ManagerActions } from '../manager/manager.actions';
 
 export interface BackendWebSocketMessage {
-    event: 'BUILDING_NEW_ISSUE' | 'BUILDING_ISSUE_UPDATE' | 'USER_ISSUE_UPDATE' | "SUCCESSFULLY_SUBSCRIBED_BUILDING";
+    event: 'BUILDING_NEW_ISSUE' | 'BUILDING_ISSUE_UPDATE' | 'USER_ISSUE_UPDATE' |
+    'SUCCESSFULLY_SUBSCRIBED_BUILDING' | 'SUCCESSFULLY_SUBSCRIBED_EMPLOYEE' | 'SUCCESSFULLY_SUBSCRIBED_MANAGER' |
+    'SPECIFIC_EMPLOYEE_NEW_ISSUE' | 'MANAGER_NEW_ISSUE' | 'MANAGER_ISSUE_STATUS_CHANGED' | 'ERROR';
     data: Issue | { message: string } | string;
 }
 
@@ -25,12 +30,19 @@ export class UserEffects {
     actions$ = inject(Actions)
     http = inject(HttpClient);
     store = inject(Store);
+    router = inject(Router);
 
     private authURL = `http://localhost:8080/auth`;
     private usersURL = `http://localhost:8080/users`;
-    private wsIssuesURL = `ws://localhost:8080/ws/issues`;
+    private wsIssuesURL = `ws://localhost:8080/issues`;
 
-    constructor() { }
+    private currentUser: User | null = null;
+
+    constructor() {
+        this.store.select(selectUser).subscribe(user => {
+            this.currentUser = user;
+        });
+    }
 
     loadUser$ = createEffect(() => {
         return this.actions$.pipe(
@@ -39,7 +51,25 @@ export class UserEffects {
                 this.http.get<User>(`http://localhost:8080/users/from-cookie`, {
                     withCredentials: true
                 }).pipe(
-                    map(user => UserActions['[User]LoadUserSuccess']({ user })),
+                    map(user => {
+                        if (user)
+                            this.store.dispatch(UserActions['[IssueWebSocket]Initialize']());
+                        return UserActions['[User]LoadUserSuccess']({ user });
+                    }),
+                    tap(({ user }) => {
+                        if (user) {
+                            switch (user.role) {
+                                case UserRoleEnum.EMPLOYEE:
+                                    this.router.navigateByUrl('/employee');
+                                    break;
+                                case UserRoleEnum.MANAGER:
+                                    this.router.navigateByUrl('/manager');
+                                    break;
+                                default:
+                                    this.router.navigateByUrl('/tenant');
+                            }
+                        }
+                    }),
                     catchError((err) => {
                         if (err.statusCode === 401) {
                             return of(UserActions['[User]LoadUserSuccess']({ user: null }));
@@ -63,7 +93,24 @@ export class UserEffects {
                             withCredentials: true
                         })
                     ),
-                    map(user => UserActions['[Auth]LoginSuccess']({ user })),
+                    map(user => {
+                        this.store.dispatch(UserActions['[IssueWebSocket]Initialize']());
+                        return UserActions['[Auth]LoginSuccess']({ user });
+                    }),
+                    tap(({ user }) => {
+                        if (user) {
+                            switch (user.role) {
+                                case UserRoleEnum.EMPLOYEE:
+                                    this.router.navigateByUrl('/employee');
+                                    break;
+                                case UserRoleEnum.MANAGER:
+                                    this.router.navigateByUrl('/manager');
+                                    break;
+                                default:
+                                    this.router.navigateByUrl('/tenant');
+                            }
+                        }
+                    }),
                     catchError(error => of(UserActions['[Auth]LoginFailure']({ error })))
                 )
             )
@@ -82,7 +129,10 @@ export class UserEffects {
                             withCredentials: true
                         })
                     ),
-                    map(user => UserActions['[Auth]RegisterSuccess']({ user })),
+                    map(user => {
+                        this.store.dispatch(UserActions['[IssueWebSocket]Initialize']());
+                        return UserActions['[Auth]RegisterSuccess']({ user });
+                    }),
                     catchError(error => of(UserActions['[Auth]RegisterFailure']({ error })))
                 )
             )
@@ -96,7 +146,13 @@ export class UserEffects {
                 this.http.post(`${this.authURL}/logout`, {}, {
                     withCredentials: true
                 }).pipe(
-                    map(() => UserActions['[Auth]LogoutSuccess']()),
+                    map(() => {
+                        this.store.dispatch(UserActions['[IssueWebSocket]Disconnect']());
+                        return UserActions['[Auth]LogoutSuccess']();
+                    }),
+                    tap(() => {
+                        this.router.navigateByUrl('/login');
+                    })
                 )
             )
         );
@@ -120,7 +176,8 @@ export class UserEffects {
                         }
                     }
                 });
-                return websocket$.pipe(map(message => this.handleIssueWebSocketMessage(message)),
+                return websocket$.pipe(
+                    map(message => this.handleIssueWebSocketMessage(message)),
                     catchError(error => {
                         return of(UserActions["[IssueWebSocket]Error"]({ error }));
                     }),
@@ -159,6 +216,8 @@ export class UserEffects {
     private handleIssueWebSocketMessage(message: BackendWebSocketMessage) {
         switch (message.event) {
             case 'SUCCESSFULLY_SUBSCRIBED_BUILDING':
+            case 'SUCCESSFULLY_SUBSCRIBED_EMPLOYEE':
+            case 'SUCCESSFULLY_SUBSCRIBED_MANAGER':
                 return UserActions["[IssueWebSocket]SubscribedSuccessfully"]({
                     data: message.data as { message: string }
                 });
@@ -174,12 +233,27 @@ export class UserEffects {
                 });
 
             case 'USER_ISSUE_UPDATE':
-                return TenantActions["[MyIssues]IssueUpdated"]({
+                return TenantActions['[MyIssues]IssueUpdated']({
+                    issue: message.data as Issue
+                });
+            case 'SPECIFIC_EMPLOYEE_NEW_ISSUE':
+                return EmployeeActions['[IssueWebSocket]NewIssueAssigned']({
+                    issue: message.data as Issue
+                })
+
+            case 'MANAGER_NEW_ISSUE':
+                return ManagerActions['[IssueWebSocket]NewIssueAdded']({
+                    issue: message.data as Issue
+                });
+            case 'MANAGER_ISSUE_STATUS_CHANGED':
+                return ManagerActions['[IssueWebSocket]IssueUpdated']({
                     issue: message.data as Issue
                 });
 
+            case 'ERROR':
             default:
                 return UserActions["[IssueWebSocket]UnknownMessage"]({ message });
         }
     }
+
 }

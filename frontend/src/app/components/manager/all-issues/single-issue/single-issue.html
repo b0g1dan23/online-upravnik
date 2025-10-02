@@ -1,0 +1,26 @@
+<app-card [ngClass]="{
+    'opacity-50': issue.currentStatus.status === 'RESOLVED',
+    'border-yellow-500': issue.currentStatus.status === 'IN_PROGRESS'}">
+    <div class="flex justify-between items-start gap-2">
+        <span>
+            <h3>Greška #{{ "****" + issue.id.toString().slice(-4) }}</h3>
+            <p class="max-line-3 overflow-hidden text-ellipsis"
+                style="line-clamp: 3; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical;">
+                {{ issue.problemDescription}}
+            </p>
+        </span>
+        <span class="!py-.5 !px-2 rounded-md text-sm" [ngClass]="
+        {
+            'bg-green-100 text-green-800': issue.currentStatus.status === 'RESOLVED',
+            'bg-yellow-100 text-yellow-800': issue.currentStatus.status === 'IN_PROGRESS',
+            'bg-red-100 text-red-800': issue.currentStatus.status === 'REPORTED',
+        }
+        ">{{ issue.currentStatus.status }}</span>
+    </div>
+    <p>Prijavljeno: {{ issue.createdAt | date }}</p>
+    <p>Prijavio/la: {{issue.user.firstName + " " + issue.user.lastName}}</p>
+    @if(issue.currentStatus.status === 'RESOLVED'){
+    <p>Rešeno: {{ issue.currentStatus.createdAt | date }}</p>
+    <p>Rešio: {{ issue.currentStatus.changedBy?.firstName + " " + issue.currentStatus.changedBy?.lastName }}</p>
+    }
+</app-card>

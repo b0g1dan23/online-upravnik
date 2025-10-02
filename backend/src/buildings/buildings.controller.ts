@@ -51,4 +51,11 @@ export class BuildingsController {
     updateBuilding(@Param('id', ParseUUIDPipe) id: string, @Body(ValidationPipe) updateData: { name: string }) {
         return this.buildingsService.updateBuildingName(id, updateData.name);
     }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRoleEnum.MANAGER)
+    @Put('/:id/activate')
+    updateBuildingFromInactiveToActive(@Param('id', ParseUUIDPipe) id: string) {
+        return this.buildingsService.updateInactiveBuildingToActive(id);
+    }
 }

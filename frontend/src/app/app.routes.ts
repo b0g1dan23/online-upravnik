@@ -24,11 +24,25 @@ export const routes: Routes = [{
     }
 }, {
     path: 'manager',
-    loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),
+    loadComponent: () => import('./pages/manager/manager-layout/manager-layout').then(m => m.ManagerLayout),
     canActivate: [RoleGuard],
     data: {
         role: UserRoleEnum.MANAGER
-    }
+    },
+    children: [
+        {
+            path: '',
+            loadComponent: () => import('./pages/manager/manager').then(m => m.Manager),
+        },
+        {
+            path: 'employees',
+            loadComponent: () => import('./pages/manager/employees/employees').then(m => m.Employees),
+        },
+        {
+            path: 'buildings',
+            loadComponent: () => import('./pages/manager/buildings/buildings').then(m => m.Buildings),
+        }
+    ]
 }, {
     path: 'employee',
     loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),

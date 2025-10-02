@@ -1,0 +1,20 @@
+<nav class="container !py-4 flex align-center justify-between">
+    <ul class="flex gap-2">
+        <li>
+            <a class="!p-2 rounded-md border-1 border-orange-400 hover:bg-orange-200 transition-all duration-200 ease-in-out"
+                [class.bg-orange-200]="currentURL === '/manager'" routerLink="/manager">Početna</a>
+        </li>
+        <li>
+            <a class="!p-2 rounded-md border-1 border-orange-400 hover:bg-orange-200 transition-all duration-200 ease-in-out"
+                [class.bg-orange-200]="currentURL === '/manager/employees'"
+                routerLink="/manager/employees">Zaposleni</a>
+        </li>
+        <li>
+            <a class="!p-2 rounded-md border-1 border-orange-400 hover:bg-orange-200 transition-all duration-200 ease-in-out"
+                [class.bg-orange-200]="currentURL === '/manager/buildings'" routerLink="/manager/buildings">Zgrade</a>
+        </li>
+    </ul>
+    <app-button (click)="logout()">
+        Odjavi se
+    </app-button>
+</nav>

@@ -2,7 +2,7 @@ import { Building } from "src/buildings/buildings.entity";
 import type { Employee } from "src/employees/employees.entity";
 import { Notification } from "src/notifications/notifications.entity";
 import { User } from "src/users/users.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { AfterUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export enum IssueStatusEnum {
     REPORTED = 'REPORTED',
@@ -44,6 +44,12 @@ export class Issue {
 
     @OneToMany(() => Notification, notification => notification.issue, { cascade: true })
     notifications: Notification[];
+
+    @Column({ default: () => 'true' })
+    isActive: boolean;
+
+    @Column({ type: 'timestamp', nullable: true })
+    deletedAt: Date | null;
 
     @Column({ default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;

@@ -1,0 +1,17 @@
+<section class="grid gap-2">
+    <h2>Pregled svih prijavljenih kvarova</h2>
+
+    @if(issues$ | async; as issues) {
+    @if(issues.length > 0) {
+    <div class="grid grid-cols-3 gap-4">
+        @for (issue of issues$ | async; track $index) {
+        <app-single-issue [issue]="issue"></app-single-issue>
+        }
+    </div>
+    }@else {
+    <p>Nema prijavljenih kvarova.</p>
+    }
+    }@else {
+    <p>Došlo je do greške prilikom učitavanja prijavljenih kvarova.</p>
+    }
+</section>

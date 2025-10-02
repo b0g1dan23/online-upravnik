@@ -42,6 +42,12 @@ export class User {
     @OneToMany(() => IssuePicture, picture => picture.uploadedBy)
     issuePictures: IssuePicture[];
 
+    @Column({ default: true })
+    isActive: boolean;
+
+    @Column({ type: 'timestamp', nullable: true })
+    deletedAt: Date | null;
+
     @Column({ default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 

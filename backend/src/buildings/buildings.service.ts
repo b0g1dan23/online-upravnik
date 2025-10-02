@@ -29,7 +29,11 @@ export class BuildingsService {
             relations: {
                 employeeResponsible: true,
                 residents: true,
-                issues: true
+                issues: {
+                    statusHistory: true,
+                    user: true,
+                    employeeResponsible: true
+                }
             }
         });
         return buildings;
@@ -44,21 +48,26 @@ export class BuildingsService {
     }
 
     async listAllBuildingsShorthand() {
-        const buildings = await this.buildingsRepository.query(`SELECT id, address, name FROM building`);
+        const buildings = await this.buildingsRepository.query(`SELECT id, address, name FROM building WHERE "isActive" = true`);
 
         return buildings.map(building => new ViewBuildingBaseDTO(building));
     }
 
     async removeBuilding(id: string) {
-        const deleteResult = await this.buildingsRepository.delete({ id });
-        if (deleteResult.affected === 0) {
+        const updateResult = await this.buildingsRepository.update({
+            id
+        }, {
+            isActive: false,
+            deletedAt: new Date()
+        })
+        if (updateResult.affected === 0) {
             throw new NotFoundException("Building with that ID not found!");
         }
         return { buildingID: id };
     }
 
     async removeAllBuildings() {
-        const deleteResult = await this.buildingsRepository.delete({});
+        const deleteResult = await this.buildingsRepository.deleteAll();
         if (deleteResult.affected === 0) {
             throw new NotFoundException("No buildings found to delete!");
         }
@@ -71,5 +80,13 @@ export class BuildingsService {
             throw new NotFoundException("Building with that ID not found!");
         }
         return { buildingID, name: newName };
+    }
+
+    async updateInactiveBuildingToActive(id: string) {
+        const updateResult = await this.buildingsRepository.update({ id }, { isActive: true, deletedAt: null });
+        if (updateResult.affected === 0) {
+            throw new NotFoundException("Building with that ID not found!");
+        }
+        return { buildingID: id };
     }
 }
