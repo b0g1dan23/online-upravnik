@@ -74,10 +74,18 @@ export class IssuesController {
     async getAllIssuesForEmployee(@CurrentUser() user: JwtUser) {
         try {
             const employee = await this.employeesService.findEmployeeById(user.id, {
-                issues: true
+                issuesAssigned: {
+                    user: true,
+                    building: true,
+                    employeeResponsible: true,
+                    statusHistory: {
+                        changedBy: true
+                    }
+                }
             });
-            return employee.issues.map(issue => this.mapToCurrentStatusDto(issue));
+            return employee.issuesAssigned.map(this.mapToCurrentStatusDto);
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException(
                 error.message || 'Failed to fetch employee issues'
             );
@@ -162,13 +170,16 @@ export class IssuesController {
         }
     }
 
+    @UseGuards(RolesGuard)
+    @Roles(UserRoleEnum.EMPLOYEE)
     @Put('/:issueId')
     async updateIssue(
         @Param('issueId', ParseUUIDPipe) issueId: string,
         @Body() updateBody: UpdateIssueStatusDTO,
+        @CurrentUser() user: JwtUser
     ) {
         try {
-            const updatedIssue = await this.issuesService.updateIssueStatus(issueId, updateBody.status);
+            const updatedIssue = await this.issuesService.updateIssueStatus(issueId, user.id, updateBody.status);
             const issueDto = this.mapToCurrentStatusDto(updatedIssue);
 
             Promise.all([
@@ -178,25 +189,25 @@ export class IssuesController {
                 ),
                 this.issuesGateway.notifyAllManagersIssueStatusChange(issueDto)
             ]);
-            const [notification, buildingUserIds] = await Promise.all([
-                this.notificationsService.createIssueNotificationForBuilding(
-                    NotificationType.ISSUE_STATUS_CHANGED,
-                    issueId,
-                    `Ažuriran je status prijave kvara: ${updatedIssue.problemDescription}`
-                ),
-                this.notificationsService.getUsersInSameBuildingAsIssue(issueId)
-            ]);
+            // const [notification, buildingUserIds] = await Promise.all([
+            //     this.notificationsService.createIssueNotificationForBuilding(
+            //         NotificationType.ISSUE_STATUS_CHANGED,
+            //         issueId,
+            //         `Ažuriran je status prijave kvara: ${updatedIssue.problemDescription}`
+            //     ),
+            //     this.notificationsService.getUsersInSameBuildingAsIssue(issueId)
+            // ]);
 
-            const notificationPromises = [
-                this.issuesGateway.notifyUserIssueUpdate(updatedIssue.user.id, issueDto),
-                ...buildingUserIds.map(userId =>
-                    this.notificationsGateway.notifyUserNewNotification(userId, notification)
-                )
-            ];
+            // const notificationPromises = [
+            //     this.issuesGateway.notifyUserIssueUpdate(updatedIssue.user.id, issueDto),
+            //     ...buildingUserIds.map(userId =>
+            //         this.notificationsGateway.notifyUserNewNotification(userId, notification)
+            //     )
+            // ];
 
-            await Promise.allSettled(notificationPromises).catch(error =>
-                console.error('WebSocket notification error:', error)
-            );
+            // await Promise.allSettled(notificationPromises).catch(error =>
+            //     console.error('WebSocket notification error:', error)
+            // );
 
             return issueDto;
         } catch (error) {

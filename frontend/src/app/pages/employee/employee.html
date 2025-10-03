@@ -1,1 +1,5 @@
-<p>employee works!</p>
+@if(user$ | async; as user){
+<h1>Zdravo, {{user.firstName + " " + user.lastName}}</h1>
+
+<app-employee-issues></app-employee-issues>
+}

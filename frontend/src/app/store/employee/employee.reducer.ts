@@ -16,12 +16,7 @@ export const employeeReducer = createReducer(
 
     on(EmployeeActions["[Issue]ChangeIssueStatus"], (state) => ({ ...state, loading: true, error: null })),
     on(EmployeeActions["[Issue]ChangeIssueStatusSuccess"], (state, { issue }) => {
-        const updatedIssues = state.buildingIssues.map(existingIssue => {
-            if (existingIssue.id === issue.id) {
-                return { ...existingIssue, status: issue.currentStatus };
-            }
-            return existingIssue;
-        })
+        const updatedIssues = state.buildingIssues.map(i => i.id === issue.id ? issue : i);
         return { ...state, buildingIssues: updatedIssues, loading: false };
     }),
     on(EmployeeActions["[Issue]ChangeIssueStatusFailure"], (state, { error }) => ({ ...state, error, loading: false })),

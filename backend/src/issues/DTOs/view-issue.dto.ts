@@ -86,13 +86,13 @@ export class ViewIssueEmployeeDTO {
 export class ViewIssueStatusDTO {
     id: string;
     status: IssueStatusEnum;
-    changedBy?: ViewEmployeeDTO;
+    changedBy?: SimpleViewEmployeeDTO;
     createdAt: Date;
 
     constructor(issueStatus: IssueStatus) {
         this.id = issueStatus.id;
         this.status = issueStatus.status;
-        this.changedBy = issueStatus.changedBy ? new ViewEmployeeDTO(issueStatus.changedBy) : undefined;
+        this.changedBy = issueStatus.changedBy ? new SimpleViewEmployeeDTO(issueStatus.changedBy) : undefined;
         this.createdAt = issueStatus.createdAt;
     }
 }

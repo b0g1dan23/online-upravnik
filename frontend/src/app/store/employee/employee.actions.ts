@@ -5,6 +5,7 @@ import { NestError } from "../user/user.model";
 export const EmployeeActions = createActionGroup({
     source: 'Employee',
     events: {
+        // TODO: Implement UI for this
         '[Issue] Change Issue Status': props<{ issueID: string, newStatus: string }>(),
         '[Issue] Change Issue Status Success': props<{ issue: Issue }>(),
         '[Issue] Change Issue Status Failure': props<{ error: NestError }>(),

@@ -26,4 +26,10 @@
     @if(canLoadDetails){
     <app-button (click)="showDetails()">Prikaži detalje</app-button>
     }
+    @if(canChangeStatus && issue.currentStatus.status !== 'RESOLVED'){
+    <div class="flex items-center gap-2">
+        <app-button class="flex-1">Izmeni status</app-button>
+        <app-button class="flex-1" (click)="markAsResolved()">Oznaci kao reseno</app-button>
+    </div>
+    }
 </app-card>

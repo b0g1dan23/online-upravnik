@@ -4,6 +4,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Issue, IssueStatus, IssueStatusEnum } from './issues.entity';
 import { CreateIssueDTO } from './DTOs/create-issue.dto';
 import { FilterIssueDTO, SearchIssueDTO } from './DTOs/filter-search.dto';
+import { Employee } from 'src/employees/employees.entity';
 
 @Injectable()
 export class IssuesService {
@@ -73,7 +74,7 @@ export class IssuesService {
         })
     }
 
-    async updateIssueStatus(issueId: string, updatedStatus: IssueStatusEnum) {
+    async updateIssueStatus(issueId: string, employeeID: string, updatedStatus: IssueStatusEnum) {
         return await this.dataSource.transaction(async manager => {
             const issue = await manager
                 .createQueryBuilder(Issue, 'issue')
@@ -96,9 +97,14 @@ export class IssuesService {
                 }
                 return updatedIssue;
             }
+            const employeeResponsible = await manager.findOne(Employee, { where: { id: employeeID } });
+            if (!employeeResponsible) {
+                throw new NotFoundException('Employee not found');
+            }
             const newStatus = manager.create(IssueStatus, {
                 issue: issue,
-                status: updatedStatus
+                status: updatedStatus,
+                changedBy: employeeResponsible
             });
             await manager.save(newStatus);
 

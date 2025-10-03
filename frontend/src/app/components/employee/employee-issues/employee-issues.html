@@ -1,0 +1,14 @@
+@if(issues$ | async; as issues){
+<div class="!my-4">
+    <h2 class="">Prijavljeni kvarovi</h2>
+    @if(issues.length > 0){
+    <ul class="grid grid-cols-3 gap-4">
+        @for(issue of issues; track issue.id){
+        <app-single-issue [issue]="issue" [canChangeStatus]="true"></app-single-issue>
+        }
+    </ul>
+    }@else {
+    <p class="text-center">Nema prijavljenih kvarova.</p>
+    }
+</div>
+}
