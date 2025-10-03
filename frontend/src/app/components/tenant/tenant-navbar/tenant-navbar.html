@@ -1,0 +1,11 @@
+<nav class="container !py-4 flex align-center justify-between">
+    <ul class="flex gap-2">
+        <li>
+            <a class="!p-2 rounded-md border-1 border-orange-400 hover:bg-orange-200 transition-all duration-200 ease-in-out cursor-pointer"
+                [class.bg-orange-200]="currentURL === '/tenant'" routerLink="/tenant">Početna</a>
+        </li>
+    </ul>
+    <app-button (click)="logout()">
+        Odjavi se
+    </app-button>
+</nav>

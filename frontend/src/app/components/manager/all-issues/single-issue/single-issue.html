@@ -23,4 +23,7 @@
     <p>Rešeno: {{ issue.currentStatus.createdAt | date }}</p>
     <p>Rešio: {{ issue.currentStatus.changedBy?.firstName + " " + issue.currentStatus.changedBy?.lastName }}</p>
     }
+    @if(canLoadDetails){
+    <app-button (click)="showDetails()">Prikaži detalje</app-button>
+    }
 </app-card>

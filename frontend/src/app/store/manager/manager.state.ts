@@ -1,5 +1,5 @@
 import { Employee, EmployeeDetails } from "../employee/employee.model";
-import { Issue } from "../tenant/tenant.model";
+import { Issue, IssueDetails } from "../tenant/tenant.model";
 import { Building, BuildingExpanded, NestError } from "../user/user.model";
 import { FilterOptions, PaginationResponse } from "./manager.model";
 
@@ -8,7 +8,7 @@ export interface ManagerState {
         items: Issue[];
         pagination: PaginationResponse | null;
         currentPage: number;
-        selectedIssue: Issue | null;
+        selectedIssue: IssueDetails | null;
         loading: boolean;
         loadingMore: boolean;
         hasMorePages: boolean;

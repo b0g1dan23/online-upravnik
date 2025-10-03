@@ -24,7 +24,7 @@ export enum UserRoleEnum {
 
 export interface Building {
     id: string;
-    name: string;
+    name: string | undefined;
     address: string;
     employeeResponsible: Employee;
     isActive: boolean;

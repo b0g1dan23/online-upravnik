@@ -14,7 +14,6 @@ export const ManagerActions = createActionGroup({
         '[Issue] Load Issues Failure': props<{ error: NestError }>(),
         '[Issue] Reset Issues': emptyProps(),
 
-        // TODO: Implement UI for this
         '[Issue] Load Issue by ID': props<{ issueID: string }>(),
         '[Issue] Load Issue by ID Success': props<{ issue: IssueDetails }>(),
         '[Issue] Load Issue by ID Failure': props<{ error: NestError }>(),
@@ -48,7 +47,6 @@ export const ManagerActions = createActionGroup({
         '[Building] Reassing Employee to Building Success': props<{ building: BuildingExpanded }>(),
         '[Building] Reassing Employee to Building Failure': props<{ error: NestError }>(),
 
-        // TODO: Implement UI for this
         '[Building] Update building name': props<{ buildingID: string, name: string }>(),
         '[Building] Update building name Success': props<{ buildingID: string, name: string }>(),
         '[Building] Update building name Failure': props<{ error: NestError }>(),

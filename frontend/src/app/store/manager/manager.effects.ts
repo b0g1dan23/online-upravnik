@@ -4,7 +4,7 @@ import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { Store } from "@ngrx/store";
 import { ManagerActions } from "./manager.actions";
 import { catchError, map, mergeMap, of, withLatestFrom } from "rxjs";
-import { Issue } from "../tenant/tenant.model";
+import { Issue, IssueDetails } from "../tenant/tenant.model";
 import { PaginationResponse } from "./manager.model";
 import { Employee, EmployeeDetails } from "../employee/employee.model";
 import { BuildingExpanded } from "../user/user.model";
@@ -40,6 +40,18 @@ export class ManagerEffects {
                 )
             }
             )
+        )
+    })
+
+    loadIssueByID$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(ManagerActions["[Issue]LoadIssueByID"]),
+            mergeMap(({ issueID }) => this.http.get<IssueDetails>(`${this.issuesURL}/${issueID}`, {
+                withCredentials: true
+            }).pipe(
+                map(issue => ManagerActions["[Issue]LoadIssueByIDSuccess"]({ issue })),
+                catchError(error => of(ManagerActions["[Issue]LoadIssueByIDFailure"]({ error })))
+            ))
         )
     })
 
@@ -133,7 +145,7 @@ export class ManagerEffects {
     updateBuildingName$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(ManagerActions["[Building]UpdateBuildingName"]),
-            mergeMap(({ buildingID, name }) => this.http.put<{ buildingID: string, name: string }>(`${this.buildingsURL}/${buildingID}`, { name }, {
+            mergeMap(({ buildingID, name }) => this.http.put<{ buildingID: string, name: string }>(`${this.buildingsURL}/${buildingID}/name`, { name }, {
                 withCredentials: true
             }).pipe(
                 map(({ buildingID, name }) => ManagerActions["[Building]UpdateBuildingNameSuccess"]({ buildingID, name })),

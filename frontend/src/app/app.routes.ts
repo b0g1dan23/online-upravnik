@@ -15,39 +15,45 @@ export const routes: Routes = [{
 }, {
     path: 'homepage',
     loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),
-}, {
-    path: 'tenant',
-    loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),
-    canActivate: [RoleGuard],
-    data: {
-        role: UserRoleEnum.TENANT
-    }
-}, {
-    path: 'manager',
-    loadComponent: () => import('./pages/manager/manager-layout/manager-layout').then(m => m.ManagerLayout),
-    canActivate: [RoleGuard],
-    data: {
-        role: UserRoleEnum.MANAGER
-    },
+},
+{
+    path: '',
+    loadComponent: () => import('./components/app-layout/app-layout').then(m => m.AppLayout),
     children: [
         {
-            path: '',
-            loadComponent: () => import('./pages/manager/manager').then(m => m.Manager),
+            path: 'tenant',
+            canActivate: [RoleGuard],
+            data: { role: UserRoleEnum.TENANT },
+            loadComponent: () => import('./pages/tenant/tenant').then(m => m.Tenant),
         },
         {
-            path: 'employees',
-            loadComponent: () => import('./pages/manager/employees/employees').then(m => m.Employees),
+            path: 'employee',
+            canActivate: [RoleGuard],
+            data: { role: UserRoleEnum.EMPLOYEE },
+            loadComponent: () => import('./pages/employee/employee').then(m => m.Employee),
         },
         {
-            path: 'buildings',
-            loadComponent: () => import('./pages/manager/buildings/buildings').then(m => m.Buildings),
+            path: 'manager',
+            canActivate: [RoleGuard],
+            data: { role: UserRoleEnum.MANAGER },
+            children: [
+                {
+                    path: '',
+                    loadComponent: () => import('./pages/manager/manager').then(m => m.Manager),
+                },
+                {
+                    path: 'employees',
+                    loadComponent: () => import('./pages/manager/employees/employees').then(m => m.Employees),
+                },
+                {
+                    path: 'buildings',
+                    loadComponent: () => import('./pages/manager/buildings/buildings').then(m => m.Buildings),
+                }
+            ]
         }
     ]
-}, {
-    path: 'employee',
-    loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),
-    canActivate: [RoleGuard],
-    data: {
-        role: UserRoleEnum.EMPLOYEE
-    }
+},
+{
+    path: '*',
+    redirectTo: 'login',
 }];

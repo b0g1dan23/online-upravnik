@@ -9,6 +9,7 @@ export const TenantActions = createActionGroup({
         '[Tenant] Load tenant issues Success': props<{ issues: Issue[] }>(),
         '[Tenant] Load tenant issues Failure': props<{ error: NestError }>(),
 
+        // TODO: Implement UI for this
         '[Tenant] Create tenant issue': props<{ issue: CreateIssueDTO }>(),
         '[Tenant] Create tenant issue Success': props<{ issue: Issue }>(),
         '[Tenant] Create tenant issue Failure': props<{ error: NestError }>(),

@@ -1,0 +1,30 @@
+@if(myIssues$ | async;as myIssues){
+<div class="!my-4">
+    <div class="flex items-center justify-between !mb-4">
+        <h2>Kvarovi koje sam ja prijavio</h2>
+        <app-button class="table" (click)="toggleAddModal()">Prijavi kvar</app-button>
+    </div>
+    <ul class="grid grid-cols-3 gap-4">
+        @for(issue of myIssues; track $index){
+        <app-single-issue [issue]="issue"></app-single-issue>
+        }
+    </ul>
+</div>
+}
+
+@if(buildingIssues$ | async;as buildingIssues){
+<div class="!my-4">
+    <h2>Kvarovi u mojoj zgradi</h2>
+    <ul class="grid grid-cols-3 gap-4 !mt-2">
+        @for(issue of buildingIssues; track $index){
+        <app-single-issue [issue]="issue"></app-single-issue>
+        }
+    </ul>
+</div>
+}
+
+@if(showAddModal$ | async){
+<app-modal (closed)="toggleAddModal()">
+    <app-add-issue (closeModal)="toggleAddModal()"></app-add-issue>
+</app-modal>
+}

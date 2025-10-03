@@ -85,7 +85,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         try {
             const user = await this.userService.findUserByID(userID);
 
-            if (user.role !== UserRoleEnum.MANAGER) {
+            if (!user || !user.isActive || user.role !== UserRoleEnum.MANAGER) {
                 client.send(JSON.stringify({
                     event: 'ERROR',
                     data: "User is not a manager"
@@ -114,7 +114,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         try {
             const user = await this.userService.findUserByID(userID);
 
-            if (!user.buildingLivingInID) {
+            if (!user || !user.isActive || user.role !== UserRoleEnum.TENANT || !user?.buildingLivingIn) {
                 client.send(JSON.stringify({
                     event: 'ERROR',
                     data: "User is not associated with any building"
@@ -125,7 +125,7 @@ export class IssuesGateway implements OnGatewayInit, OnGatewayConnection, OnGate
             const clientInfo = this.clients.get(client);
             if (clientInfo) {
                 clientInfo.userID = userID;
-                clientInfo.buildingID = user.buildingLivingInID.id;
+                clientInfo.buildingID = user?.buildingLivingIn.id;
                 clientInfo.userRole = UserRoleEnum.TENANT;
                 this.clients.set(client, clientInfo);
             }

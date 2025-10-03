@@ -1,0 +1,5 @@
+@if(user$ | async; as user){
+<h1>Dobrodošli, {{user.firstName + " " + user.lastName}}</h1>
+}
+
+<app-tenant-all-issues></app-tenant-all-issues>

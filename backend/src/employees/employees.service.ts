@@ -67,6 +67,11 @@ export class EmployeesService {
         return employee;
     }
 
+    async findEmployeeByEmail(email: string) {
+        const employee = await this.employeesRepository.findOne({ where: { email } });
+        return employee;
+    }
+
     async findLeastBusyEmployee() {
         const employees = await this.employeesRepository
             .createQueryBuilder('employee')

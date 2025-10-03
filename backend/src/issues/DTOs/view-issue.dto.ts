@@ -29,7 +29,7 @@ export class ViewIssueCurrentStatusDTO {
     problemDescription: string;
     user: ViewUserBaseDTO;
     building: ViewBuildingBaseDTO;
-    employeeResponsible: ViewEmployeeDTO;
+    employeeResponsible: SimpleViewEmployeeDTO;
     currentStatus: ViewIssueStatusDTO;
     pictures: ViewIssuePictureDTO[];
     createdAt: Date;
@@ -39,7 +39,7 @@ export class ViewIssueCurrentStatusDTO {
         this.problemDescription = issue.problemDescription;
         this.user = new ViewUserBaseDTO(issue.user);
         this.building = new ViewBuildingBaseDTO(issue.building);
-        this.employeeResponsible = new ViewEmployeeDTO(issue.employeeResponsible);
+        this.employeeResponsible = new SimpleViewEmployeeDTO(issue.employeeResponsible);
         this.currentStatus = issue.statusHistory.map(status => new ViewIssueStatusDTO(status)).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
         this.createdAt = issue.createdAt;
     }

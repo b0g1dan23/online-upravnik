@@ -35,8 +35,6 @@ export class UsersService {
 
     async findUserByEmail(email: string) {
         const user = await this.userRepository.findOne({ where: { email } });
-        if (!user)
-            throw new NotFoundException("User with that email not found!");
         return user;
     }
 
@@ -56,8 +54,6 @@ export class UsersService {
                 buildingLivingIn: true
             }
         });
-        if (!user)
-            throw new NotFoundException("User with that ID not found!");
-        return new ViewUserBaseDTO(user);
+        return user;
     }
 }

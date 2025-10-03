@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, Input, OnChanges, OnDestroy, OnInit, signal } from '@angular/core';
 import { Card } from "../../../ui/card/card";
 import { Building, BuildingExpanded } from '../../../../store/user/user.model';
 import { AsyncPipe, NgClass } from '@angular/common';
@@ -28,6 +28,7 @@ export class SingleBuilding implements OnInit, OnChanges, OnDestroy {
   public readonly Pencil = Pencil;
   public readonly Trash = Trash;
   private selectAllBuildings$ = this.store.select(selectAllBuildings);
+  newBuildingName$ = new BehaviorSubject('');
   private destroy$ = new Subject<void>();
   public unResolvedIssuesCount = 0;
 
@@ -45,6 +46,8 @@ export class SingleBuilding implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.newBuildingName$.next(this.building.name || "");
+
     if (this.isExpandedBuilding()) {
       this.selectAllBuildings$.pipe(
         map(buildings => buildings.find(b => b.id === this.building.id)),
@@ -69,16 +72,17 @@ export class SingleBuilding implements OnInit, OnChanges, OnDestroy {
     return (this.building as BuildingExpanded).employeeResponsible !== undefined && (this.building as BuildingExpanded).issues !== undefined && (this.building as BuildingExpanded).residents !== undefined;
   }
 
-  showEditNameModal() {
-    this.showModal.next(true);
-  }
-
-  closeEditNameModal() {
-    this.showModal.next(false);
+  toggleModal() {
+    this.showModal.next(!this.showModal.value);
   }
 
   deleteBuilding() {
     this.store.dispatch(ManagerActions['[Building]DeleteBuilding']({ buildingID: this.building.id }));
-    this.closeEditNameModal();
+    this.toggleModal();
+  }
+  updateBuildingName(ev: SubmitEvent) {
+    ev.preventDefault();
+    this.store.dispatch(ManagerActions['[Building]UpdateBuildingName']({ buildingID: this.building.id, name: this.newBuildingName$.value }));
+    this.toggleModal();
   }
 }

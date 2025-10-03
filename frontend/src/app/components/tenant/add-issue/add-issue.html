@@ -1,0 +1,7 @@
+<h2>Prijavi kvar u svojoj zgradi</h2>
+<form (submit)="handleSubmit($event)" class="flex flex-col gap-4">
+    <textarea rows="3" name="issueDescription" id="issueDescription" class="border-1 border-orange-400 resize-none rounded-md w-full
+            !p-2" [value]="issueDescription$ | async"
+        (change)="issueDescription$.next($any($event.target).value)"></textarea>
+    <app-button type="submit">Prijavi kvar</app-button>
+</form>

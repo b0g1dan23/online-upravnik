@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ManagerLayout } from './manager-layout';
+import { AddIssue } from './add-issue';
 
-describe('ManagerLayout', () => {
-  let component: ManagerLayout;
-  let fixture: ComponentFixture<ManagerLayout>;
+describe('AddIssue', () => {
+  let component: AddIssue;
+  let fixture: ComponentFixture<AddIssue>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ManagerLayout]
+      imports: [AddIssue]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ManagerLayout);
+    fixture = TestBed.createComponent(AddIssue);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

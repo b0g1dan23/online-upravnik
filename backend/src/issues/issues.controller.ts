@@ -57,11 +57,14 @@ export class IssuesController {
     @Get('/my/building')
     async getAllIssuesForUserBuilding(@CurrentUser() user: JwtUser) {
         const existingUser = await this.usersService.findUserByID(user.id);
-        if (!existingUser.buildingLivingInID) {
+        if (!existingUser) {
+            throw new NotFoundException('User not found');
+        }
+        if (!existingUser.buildingLivingIn) {
             throw new NotFoundException('User is not associated with any building');
         }
 
-        const issues = await this.issuesService.getIssuesByBuilding(existingUser.buildingLivingInID.id);
+        const issues = await this.issuesService.getIssuesByBuilding(existingUser.buildingLivingIn.id);
         return issues.map(issue => this.mapToCurrentStatusDto(issue));
     }
 
@@ -108,13 +111,15 @@ export class IssuesController {
                 this.usersService.findUserByID(user.id),
                 this.employeesService.findLeastBusyEmployee()
             ]);
-            if (!existingUser.buildingLivingInID) {
+            if (!existingUser)
+                throw new NotFoundException('User not found');
+            if (!existingUser.buildingLivingIn) {
                 throw new NotFoundException('User is not associated with any building');
             }
 
             const issueData = new CreateIssueDTO(
                 existingUser,
-                existingUser.buildingLivingInID,
+                existingUser.buildingLivingIn,
                 responsibleEmployee,
                 minimalInfoAboutIssue.problemDescription
             );
@@ -124,7 +129,7 @@ export class IssuesController {
 
             Promise.all([
                 this.issuesGateway.notifyBuildingNewIssue(
-                    existingUser.buildingLivingInID.id,
+                    existingUser.buildingLivingIn.id,
                     issueDto
                 ),
                 this.issuesGateway.notifySpecificEmployeeNewIssue(issueDto),

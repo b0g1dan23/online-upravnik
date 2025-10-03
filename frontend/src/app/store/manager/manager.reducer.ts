@@ -53,6 +53,10 @@ export const managerReducer = createReducer(
     on(ManagerActions["[Issue]LoadIssuesFailure"], (state, { error }) => ({ ...state, issues: { ...state.issues, loading: false, error } })),
     on(ManagerActions["[Issue]ResetIssues"], (state) => ({ ...state, issues: { ...initialManagerState.issues } })),
 
+    on(ManagerActions["[Issue]LoadIssueByID"], (state) => ({ ...state, issues: { ...state.issues, loading: true, error: null } })),
+    on(ManagerActions["[Issue]LoadIssueByIDSuccess"], (state, { issue }) => ({ ...state, issues: { ...state.issues, selectedIssue: issue, loading: false } })),
+    on(ManagerActions["[Issue]LoadIssueByIDFailure"], (state, { error }) => ({ ...state, issues: { ...state.issues, loading: false, error } })),
+
     on(ManagerActions["[Employee]LoadAllEmployees"], (state) => ({ ...state, employees: { ...state.employees, loading: true, error: null } })),
     on(ManagerActions["[Employee]LoadAllEmployeesSuccess"], (state, { employees }) => ({ ...state, employees: { ...state.employees, items: employees, loading: false } })),
     on(ManagerActions["[Employee]LoadAllEmployeesFailure"], (state, { error }) => ({ ...state, employees: { ...state.employees, loading: false, error } })),

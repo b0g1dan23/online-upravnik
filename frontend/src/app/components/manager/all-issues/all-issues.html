@@ -4,8 +4,9 @@
     @if(issues$ | async; as issues) {
     @if(issues.length > 0) {
     <div class="grid grid-cols-3 gap-4">
-        @for (issue of issues$ | async; track $index) {
-        <app-single-issue [issue]="issue"></app-single-issue>
+        @for (issue of issues; track $index) {
+        <app-single-issue [issue]="issue" [canLoadDetails]="true"
+            (showIssueDetails)="showIssueDetails(issue.id)"></app-single-issue>
         }
     </div>
     }@else {
@@ -15,3 +16,37 @@
     <p>Došlo je do greške prilikom učitavanja prijavljenih kvarova.</p>
     }
 </section>
+
+@if(showModal | async) {
+@if(selectedIssue$ | async; as issue) {
+<app-modal (closed)="toggleModal()">
+    <h2>Detalji prijavljenog kvara</h2>
+    <p>Opis problema: {{ issue.problemDescription }}</p>
+    <hr class="!my-2">
+    <p>Prijavio je korisnik: {{issue.user.firstName + " " + issue.user.lastName}}</p>
+    <p>Kontakt email korisnika: <a [href]="'mailto:' + issue.user.email">{{issue.user.email}}</a></p>
+    <p>Broj telefona korisnika: <a [href]="'tel:' + issue.user.phoneNumber">{{issue.user.phoneNumber}}</a></p>
+    <hr class="!my-2">
+    <p>Adresa zgrade: {{issue.building.address}}</p>
+    <hr class="!my-2">
+    <p>Zaposleni odgovoran za zgradu: {{issue.employeeResponsible.firstName + " " + issue.employeeResponsible.lastName}}
+    </p>
+    <p>Kontakt email zaposlenog: <a
+            [href]="'mailto:' + issue.employeeResponsible.email">{{issue.employeeResponsible.email}}</a>
+    </p>
+    <p>Kontakt telefon zaposlenog: <a
+            [href]="'tel:' + issue.employeeResponsible.phoneNumber">{{issue.employeeResponsible.phoneNumber}}</a>
+    </p>
+    <p>Pozicija zaposlenog: {{issue.employeeResponsible.position}}</p>
+    <hr class="!my-2">
+    <p>Svi statusi kvara:</p>
+    @for (status of issue.statusHistory; track $index) {
+    <div class="border !p-2 rounded !mb-2">
+        <p>Status: {{status.status}}</p>
+        <p>Datum promene statusa: {{status.createdAt | date:'dd.MM.yyyy.'}}</p>
+    </div>
+    }
+
+</app-modal>
+}
+}

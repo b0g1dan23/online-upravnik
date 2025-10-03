@@ -5,6 +5,7 @@ import { UsersService } from './users.service';
 import { User } from './users.entity';
 import { BuildingsModule } from 'src/buildings/buildings.module';
 import { JwtModule } from '@nestjs/jwt';
+import { EmployeesModule } from 'src/employees/employees.module';
 
 @Module({
     imports: [
@@ -15,7 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' }
             }),
-        })
+        }), EmployeesModule
     ],
     controllers: [UsersController],
     providers: [UsersService],

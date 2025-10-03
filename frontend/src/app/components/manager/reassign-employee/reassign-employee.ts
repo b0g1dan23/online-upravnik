@@ -8,19 +8,20 @@ import { ManagerActions } from '../../../store/manager/manager.actions';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NestError } from '../../../store/user/user.model';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-reassign-employee',
-  imports: [Card],
+  imports: [Card, AsyncPipe],
   templateUrl: './reassign-employee.html',
 })
 export class ReassignEmployee implements OnInit {
   private store = inject(Store);
   public buildings: BuildingsShorthand[] = [];
   public employees: Employee[] = [];
-  public selectedBuildingID = signal('');
-  public selectedEmployeeID = signal('');
+  public selectedBuildingID$ = new BehaviorSubject('');
+  public selectedEmployeeID$ = new BehaviorSubject('');
   private snackBar = inject(MatSnackBar);
   private reassignError: NestError | null = null;
 
@@ -31,7 +32,7 @@ export class ReassignEmployee implements OnInit {
       .getBuildingsList()
       .subscribe(buildings => {
         this.buildings = buildings;
-        this.selectedBuildingID.set(this.buildings[0]?.id);
+        this.selectedBuildingID$.next(buildings[0]?.id || '');
       });
 
     this.store.select(selectBuildingsError)
@@ -47,7 +48,7 @@ export class ReassignEmployee implements OnInit {
     this.store.select(selectAllEmployees)
       .subscribe(employees => {
         this.employees = employees;
-        this.selectedEmployeeID.set(this.employees.find(e => e.isActive)?.id || '');
+        this.selectedEmployeeID$.next(this.employees.find(e => e.isActive)?.id || '');
       });
 
     this.router.events
@@ -56,15 +57,15 @@ export class ReassignEmployee implements OnInit {
       ).subscribe(() => {
         const state = history.state as { buildingID: string };
         if (state && state.buildingID) {
-          this.selectedBuildingID.set(state.buildingID);
+          this.selectedBuildingID$.next(state.buildingID);
         }
       })
   }
 
   reassignEmployee() {
     this.store.dispatch(ManagerActions['[Building]ReassingEmployeeToBuilding']({
-      buildingID: this.selectedBuildingID(),
-      employeeID: this.selectedEmployeeID()
+      buildingID: this.selectedBuildingID$.value,
+      employeeID: this.selectedEmployeeID$.value
     }));
     if (this.reassignError === null)
       this.snackBar.open('Zaposleni je uspešno premešten');
