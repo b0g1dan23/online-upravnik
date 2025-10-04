@@ -43,6 +43,8 @@ export class IssuesController {
     ) { }
 
     @Get('/my')
+    @UseGuards(RolesGuard, JwtAuthGuard)
+    @Roles(UserRoleEnum.TENANT)
     async getAllIssuesForUser(@CurrentUser() user: JwtUser) {
         try {
             const issues = await this.issuesService.getAllIssuesForUser(user.id);
@@ -55,6 +57,8 @@ export class IssuesController {
     }
 
     @Get('/my/building')
+    @UseGuards(RolesGuard, JwtAuthGuard)
+    @Roles(UserRoleEnum.TENANT)
     async getAllIssuesForUserBuilding(@CurrentUser() user: JwtUser) {
         const existingUser = await this.usersService.findUserByID(user.id);
         if (!existingUser) {
@@ -69,7 +73,7 @@ export class IssuesController {
     }
 
     @Get('/employee')
-    @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard, JwtAuthGuard)
     @Roles(UserRoleEnum.EMPLOYEE)
     async getAllIssuesForEmployee(@CurrentUser() user: JwtUser) {
         try {
@@ -82,7 +86,7 @@ export class IssuesController {
                         changedBy: true
                     }
                 }
-            });
+            }, true);
             return employee.issuesAssigned.map(this.mapToCurrentStatusDto);
         } catch (error) {
             console.log(error)

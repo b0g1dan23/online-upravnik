@@ -24,14 +24,37 @@ export class IssuesService {
             .leftJoinAndSelect('status.changedBy', 'statusChanger')
             .leftJoinAndSelect('issue.pictures', 'pictures')
             .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader')
+            .leftJoin(
+                qb => qb
+                    .select('"issueId", MAX("createdAt") as max_created_at')
+                    .from('issue_status', 'is')
+                    .groupBy('"issueId"'),
+                'latest_status',
+                'latest_status."issueId" = issue.id'
+            )
+            .leftJoin(
+                'issue_status',
+                'current_status',
+                'current_status."issueId" = issue.id AND current_status."createdAt" = latest_status.max_created_at'
+            )
+            .addSelect(`
+            CASE 
+                WHEN current_status.status = 'RESOLVED' THEN 2
+                WHEN current_status.status = 'CANCELLED' THEN 2
+                ELSE 1
+            END
+        `, 'status_order')
             .where('issue.user.id = :userId', { userId })
-            .orderBy('issue.createdAt', 'DESC')
+            .orderBy('status_order', 'ASC')
+            .addOrderBy('issue.createdAt', 'DESC')
             .addOrderBy('status.createdAt', 'DESC')
             .getMany();
     }
 
     async getAllIssues(page: number = 1, limit: number = 24): Promise<{ issues: Issue[], totalCount: number }> {
-        const queryBuilder = this.issueRepository
+        const offset = (page - 1) * limit;
+
+        const query = this.issueRepository
             .createQueryBuilder('issue')
             .leftJoinAndSelect('issue.user', 'user')
             .leftJoinAndSelect('issue.building', 'building')
@@ -39,21 +62,38 @@ export class IssuesService {
             .leftJoinAndSelect('issue.statusHistory', 'status')
             .leftJoinAndSelect('status.changedBy', 'statusChanger')
             .leftJoinAndSelect('issue.pictures', 'pictures')
-            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader');
-
-        queryBuilder.orderBy('issue.createdAt', 'DESC')
-            .addOrderBy('status.createdAt', 'DESC');
-
-        const totalCount = await queryBuilder.getCount();
-
-        const offset = (page - 1) * limit;
-        queryBuilder
+            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader')
+            .leftJoin(
+                qb => qb
+                    .select('"issueId", MAX("createdAt") as max_created_at')
+                    .from('issue_status', 'is')
+                    .groupBy('"issueId"'),
+                'latest_status',
+                'latest_status."issueId" = issue.id'
+            )
+            .leftJoin(
+                'issue_status',
+                'current_status',
+                'current_status."issueId" = issue.id AND current_status."createdAt" = latest_status.max_created_at'
+            )
+            .addSelect(`
+                CASE 
+                    WHEN current_status.status = 'RESOLVED' THEN 2
+                    WHEN current_status.status = 'CANCELLED' THEN 2
+                    ELSE 1
+                END
+            `, 'status_order')
+            .orderBy('status_order', 'ASC')
+            .addOrderBy('issue.createdAt', 'DESC')
+            .addOrderBy('status.createdAt', 'DESC')
             .skip(offset)
             .take(limit);
 
-        const issues = await queryBuilder.getMany();
+        const [issues, totalCount] = await query.getManyAndCount();
+
         return { issues, totalCount };
     }
+
 
     async createIssue(issueData: CreateIssueDTO): Promise<Issue> {
         return await this.dataSource.transaction(async manager => {
@@ -154,21 +194,42 @@ export class IssuesService {
     }
 
     async getIssuesByBuilding(buildingId: string): Promise<Issue[]> {
-        return this.issueRepository.find({
-            where: { building: { id: buildingId } },
-            relations: {
-                user: true,
-                building: true,
-                employeeResponsible: true,
-                statusHistory: {
-                    changedBy: true
-                },
-                pictures: {
-                    uploadedBy: true
-                }
-            }
-        })
+        return this.issueRepository
+            .createQueryBuilder('issue')
+            .leftJoinAndSelect('issue.user', 'user')
+            .leftJoinAndSelect('issue.building', 'building')
+            .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
+            .leftJoinAndSelect('issue.statusHistory', 'statusHistory')
+            .leftJoinAndSelect('statusHistory.changedBy', 'statusChanger')
+            .leftJoinAndSelect('issue.pictures', 'pictures')
+            .leftJoinAndSelect('pictures.uploadedBy', 'pictureUploader')
+            .leftJoin(
+                qb => qb
+                    .select('"issueId", MAX("createdAt") as max_created_at')
+                    .from('issue_status', 'is')
+                    .groupBy('"issueId"'),
+                'latest_status',
+                'latest_status."issueId" = issue.id'
+            )
+            .leftJoin(
+                'issue_status',
+                'current_status',
+                'current_status."issueId" = issue.id AND current_status."createdAt" = latest_status.max_created_at'
+            )
+            .addSelect(`
+            CASE 
+                WHEN current_status.status = 'RESOLVED' THEN 2
+                WHEN current_status.status = 'CANCELLED' THEN 2
+                ELSE 1
+            END
+        `, 'status_order')
+            .where('issue.building.id = :buildingId', { buildingId })
+            .orderBy('status_order', 'ASC')
+            .addOrderBy('issue.createdAt', 'DESC')
+            .addOrderBy('statusHistory.createdAt', 'DESC')
+            .getMany();
     }
+
 
     async filterIssues(filterData: FilterIssueDTO) {
         const queryBuilder = this.issueRepository

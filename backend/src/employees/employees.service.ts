@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsRelationByString, FindOptionsRelations, Repository } from 'typeorm';
+import { DataSource, FindOptionsOrder, FindOptionsRelationByString, FindOptionsRelations, Repository } from 'typeorm';
 import { Employee } from './employees.entity';
 import { CreateEmployeeDTO } from './DTOs/create-employee.dto';
 import { SimpleViewEmployeeDTO, ViewEmployeeDTO } from './DTOs/view-employee.dto';
@@ -56,8 +56,44 @@ export class EmployeesService {
         return { employeeID };
     }
 
-    async findEmployeeById(id: string, relations?: FindOptionsRelationByString | FindOptionsRelations<Employee> | undefined) {
-        const employee = await this.employeesRepository.findOne({ where: { id }, relations });
+    async findEmployeeById(id: string, relations?: FindOptionsRelationByString | FindOptionsRelations<Employee> | undefined, getSortedIssues: boolean = false) {
+        let employee: Employee | null = null;
+        if (getSortedIssues) {
+            employee = await this.employeesRepository
+                .createQueryBuilder('employee')
+                .leftJoinAndSelect('employee.issuesAssigned', 'issue')
+                .leftJoinAndSelect('issue.user', 'user')
+                .leftJoinAndSelect('issue.building', 'building')
+                .leftJoinAndSelect('issue.employeeResponsible', 'employeeResponsible')
+                .leftJoinAndSelect('issue.statusHistory', 'statusHistory')
+                .leftJoinAndSelect('statusHistory.changedBy', 'statusChanger')
+                .leftJoin(
+                    qb => qb
+                        .select('"issueId", MAX("createdAt") as max_created_at')
+                        .from('issue_status', 'is')
+                        .groupBy('"issueId"'),
+                    'latest_status',
+                    'latest_status."issueId" = issue.id'
+                )
+                .leftJoin(
+                    'issue_status',
+                    'current_status',
+                    'current_status."issueId" = issue.id AND current_status."createdAt" = latest_status.max_created_at'
+                )
+                .addSelect(`
+            CASE 
+                WHEN current_status.status = 'RESOLVED' THEN 2
+                WHEN current_status.status = 'CANCELLED' THEN 2
+                ELSE 1
+            END
+        `, 'status_order')
+                .where('employee.id = :id', { id })
+                .orderBy('status_order', 'ASC')
+                .addOrderBy('issue.createdAt', 'DESC')
+                .getOne();
+        } else {
+            employee = await this.employeesRepository.findOne({ where: { id }, relations });
+        }
         if (!employee) {
             throw new NotFoundException("Employee with that ID not found!");
         }

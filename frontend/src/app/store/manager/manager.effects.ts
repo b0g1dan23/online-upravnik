@@ -27,11 +27,12 @@ export class ManagerEffects {
             ofType(ManagerActions["[Issue]LoadIssues"]),
             withLatestFrom(this.store.select(selectIssuesState)),
             mergeMap(([_, { currentPage }]) => {
-                const nextPage = currentPage + 1;
+                const nextPage = Number(currentPage) + 1;
                 const isFirstPage = currentPage === 0;
                 return this.http.get<{ issues: Issue[], pagination: PaginationResponse }>(`${this.issuesURL}/all`, {
                     params: {
-                        page: nextPage.toString()
+                        page: nextPage.toString(),
+                        limit: '12'
                     },
                     withCredentials: true
                 }).pipe(

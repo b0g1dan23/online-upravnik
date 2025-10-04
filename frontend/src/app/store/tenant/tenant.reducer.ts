@@ -19,7 +19,7 @@ export const tenantReducer = createReducer(
     on(TenantActions["[Tenant]LoadTenantIssuesFailure"], (state, { error }) => ({ ...state, error, loading: { ...state.loading, myIssues: false, buildingIssues: false } })),
 
     on(TenantActions["[Tenant]CreateTenantIssue"], (state) => ({ ...state, loading: { ...state.loading, myIssues: true }, error: null })),
-    on(TenantActions["[Tenant]CreateTenantIssueSuccess"], (state, { issue }) => ({ ...state, myIssues: [...state.myIssues, issue], loading: { ...state.loading, myIssues: false } })),
+    on(TenantActions["[Tenant]CreateTenantIssueSuccess"], (state, { issue }) => ({ ...state, myIssues: [issue, ...state.myIssues], loading: { ...state.loading, myIssues: false } })),
     on(TenantActions["[Tenant]CreateTenantIssueFailure"], (state, { error }) => ({ ...state, error, loading: { ...state.loading, myIssues: false } })),
 
     on(TenantActions["[BuildingIssues]LoadBuildingIssues"], (state) => ({ ...state, loading: { ...state.loading, buildingIssues: true }, error: null })),

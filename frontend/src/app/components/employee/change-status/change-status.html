@@ -1,0 +1,10 @@
+<h2 class="!mb-2">Postavi novi status kvaru</h2>
+@for(status of statusOptions; track status) {
+@if(status !== currentStatus) {
+<div class="border-l-4 !p-3 rounded-md !mb-3 shadow-sm cursor-pointer
+ hover:scale-105 transition-all duration-200 ease-in-out" [ngClass]=" { 'border-green-500 bg-green-50' : status==='RESOLVED' , 'border-blue-500 bg-blue-50' :
+    status==='IN_PROGRESS' , 'border-red-500 bg-red-50' : status==='CANCELLED' , 'border-gray-500 bg-gray-50' :
+    status==='REPORTED' }" (click)="changeStatus(status)">{{ status }}</div>
+
+}
+}
