@@ -8,11 +8,10 @@ import { EmployeeActions } from '../../../../store/employee/employee.actions';
 import { BehaviorSubject } from 'rxjs';
 import { Modal } from "../../../ui/modal/modal";
 import { ChangeStatus } from "../../../employee/change-status/change-status";
-import { CdkObserveContent } from "@angular/cdk/observers";
 
 @Component({
   selector: 'app-single-issue',
-  imports: [DatePipe, Card, NgClass, Button, AsyncPipe, Modal, ChangeStatus, CdkObserveContent],
+  imports: [DatePipe, Card, NgClass, Button, AsyncPipe, Modal, ChangeStatus],
   templateUrl: './single-issue.html',
 })
 export class SingleIssue {
