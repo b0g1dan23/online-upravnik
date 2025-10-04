@@ -2,9 +2,9 @@
 @for(status of statusOptions; track status) {
 @if(status !== currentStatus) {
 <div class="border-l-4 !p-3 rounded-md !mb-3 shadow-sm cursor-pointer
- hover:scale-105 transition-all duration-200 ease-in-out" [ngClass]=" { 'border-green-500 bg-green-50' : status==='RESOLVED' , 'border-blue-500 bg-blue-50' :
-    status==='IN_PROGRESS' , 'border-red-500 bg-red-50' : status==='CANCELLED' , 'border-gray-500 bg-gray-50' :
-    status==='REPORTED' }" (click)="changeStatus(status)">{{ status }}</div>
+ hover:scale-105 transition-all duration-200 ease-in-out" [ngClass]=" { 'border-green-500 bg-green-50' : status==='REŠENO' , 'border-blue-500 bg-blue-50' :
+    status==='U_TOKU' , 'border-red-500 bg-red-50' : status==='OTKAZANO' , 'border-gray-500 bg-gray-50' :
+    status==='PRIJAVLJENO' }" (click)="changeStatus(status)">{{ status }}</div>
 
 }
 }

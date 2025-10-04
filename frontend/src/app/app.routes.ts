@@ -5,16 +5,13 @@ import { UserRoleEnum } from './store/user/user.model';
 
 export const routes: Routes = [{
     path: '',
-    redirectTo: '/login',
+    redirectTo: 'login',
     pathMatch: 'full'
 }, {
     path: 'login',
     pathMatch: 'full',
     loadComponent: () => import('./pages/login/login').then(m => m.Login),
     canActivate: [RedirectionGuard]
-}, {
-    path: 'homepage',
-    loadComponent: () => import('./pages/homepage/homepage').then(m => m.Homepage),
 },
 {
     path: '',
@@ -54,6 +51,6 @@ export const routes: Routes = [{
     ]
 },
 {
-    path: '*',
+    path: '**',
     redirectTo: 'login',
 }];

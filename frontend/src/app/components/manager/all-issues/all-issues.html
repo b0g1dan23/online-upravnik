@@ -3,7 +3,7 @@
 
     @if(issues$ | async; as issues) {
     @if(issues.length > 0) {
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for (issue of issues; track $index) {
         <app-single-issue [issue]="issue" [canLoadDetails]="true"
             (showIssueDetails)="showIssueDetails(issue.id)"></app-single-issue>
@@ -56,17 +56,17 @@
     <p class="font-semibold text-gray-800 !mb-3">Svi statusi kvara:</p>
     @for (status of issue.statusHistory; track $index) {
     <div class="border-l-4 !p-3 rounded-r-lg !mb-3 shadow-sm" [ngClass]="{
-       'border-green-500 bg-green-50': status.status === 'RESOLVED',
-       'border-blue-500 bg-blue-50': status.status === 'IN_PROGRESS', 
-       'border-red-500 bg-red-50': status.status === 'CANCELLED',
-       'border-gray-500 bg-gray-50': status.status === 'REPORTED'
+       'border-green-500 bg-green-50': status.status === 'REŠENO',
+       'border-blue-500 bg-blue-50': status.status === 'U_TOKU', 
+       'border-red-500 bg-red-50': status.status === 'OTKAZANO',
+       'border-gray-500 bg-gray-50': status.status === 'PRIJAVLJENO'
      }">
         <div class="flex items-center justify-between !mb-2">
             <span class="inline-block !px-3 !py-1 rounded-full text-sm font-medium" [ngClass]="{
-                'bg-green-100 text-green-800': status.status === 'RESOLVED',
-                'bg-blue-100 text-blue-800': status.status === 'IN_PROGRESS',
-                'bg-red-100 text-red-800': status.status === 'CANCELLED',
-                'bg-gray-100 text-gray-800': status.status === 'REPORTED'
+                'bg-green-100 text-green-800': status.status === 'REŠENO',
+                'bg-blue-100 text-blue-800': status.status === 'U_TOKU',
+                'bg-red-100 text-red-800': status.status === 'OTKAZANO',
+                'bg-gray-100 text-gray-800': status.status === 'PRIJAVLJENO'
               }">
                 {{ status.status }}
             </span>

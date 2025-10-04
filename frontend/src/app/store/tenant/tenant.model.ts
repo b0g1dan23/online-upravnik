@@ -2,10 +2,10 @@ import { Employee } from "../employee/employee.model";
 import { Building, User } from "../user/user.model";
 
 export enum IssueStatusEnum {
-    REPORTED = 'REPORTED',
-    IN_PROGRESS = 'IN_PROGRESS',
-    RESOLVED = 'RESOLVED',
-    CANCELLED = 'CANCELLED'
+    REPORTED = 'PRIJAVLJENO',
+    IN_PROGRESS = 'U_TOKU',
+    RESOLVED = 'REŠENO',
+    CANCELLED = 'OTKAZANO'
 }
 
 export interface IssueStatus {

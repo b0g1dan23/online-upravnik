@@ -4,22 +4,30 @@
         <h2>Kvarovi koje sam ja prijavio</h2>
         <app-button class="table" (click)="toggleAddModal()">Prijavi kvar</app-button>
     </div>
-    <ul class="grid grid-cols-3 gap-4">
+    @if(myIssues.length > 0){
+    <ul class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for(issue of myIssues; track $index){
         <app-single-issue [issue]="issue"></app-single-issue>
         }
     </ul>
+    }@else{
+    <p class="text-center text-gray-500">Nema prijavljenih kvarova</p>
+    }
 </div>
 }
 
 @if(buildingIssues$ | async;as buildingIssues){
 <div class="!my-4">
     <h2>Kvarovi u mojoj zgradi</h2>
-    <ul class="grid grid-cols-3 gap-4 !mt-2">
+    @if(buildingIssues.length > 0){
+    <ul class="grid grid-cols-3 gap-4 !mt-2 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for(issue of buildingIssues; track $index){
         <app-single-issue [issue]="issue"></app-single-issue>
         }
     </ul>
+    }@else {
+    <p class="text-center text-gray-500">Nema prijavljenih kvarova</p>
+    }
 </div>
 }
 

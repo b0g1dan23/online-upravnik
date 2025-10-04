@@ -1,6 +1,6 @@
 <app-card [ngClass]="{
-    'opacity-50': issue.currentStatus.status === 'RESOLVED',
-    'border-yellow-500': issue.currentStatus.status === 'IN_PROGRESS'}">
+    'opacity-50': issue.currentStatus.status === 'REŠENO',
+    'border-yellow-500': issue.currentStatus.status === 'U_TOKU'}">
     <div class="flex justify-between items-start gap-2">
         <span>
             <h3>Greška #{{ "****" + issue.id.toString().slice(-4) }}</h3>
@@ -11,22 +11,22 @@
         </span>
         <span class="!py-.5 !px-2 rounded-md text-sm" [ngClass]="
         {
-            'bg-green-100 text-green-800': issue.currentStatus.status === 'RESOLVED',
-            'bg-yellow-100 text-yellow-800': issue.currentStatus.status === 'IN_PROGRESS',
-            'bg-red-100 text-red-800': issue.currentStatus.status === 'REPORTED',
+            'bg-green-100 text-green-800': issue.currentStatus.status === 'REŠENO',
+            'bg-yellow-100 text-yellow-800': issue.currentStatus.status === 'U_TOKU',
+            'bg-red-100 text-red-800': issue.currentStatus.status === 'PRIJAVLJENO',
         }
         ">{{ issue.currentStatus.status }}</span>
     </div>
     <p>Prijavljeno: {{ issue.createdAt | date }}</p>
     <p>Prijavio/la: {{issue.user.firstName + " " + issue.user.lastName}}</p>
-    @if(issue.currentStatus.status === 'RESOLVED'){
+    @if(issue.currentStatus.status === 'REŠENO'){
     <p>Rešeno: {{ issue.currentStatus.createdAt | date }}</p>
     <p>Rešio: {{ issue.currentStatus.changedBy?.firstName + " " + issue.currentStatus.changedBy?.lastName }}</p>
     }
     @if(canLoadDetails){
     <app-button (click)="showDetails()">Prikaži detalje</app-button>
     }
-    @if(canChangeStatus && issue.currentStatus.status !== 'RESOLVED'){
+    @if(canChangeStatus && issue.currentStatus.status !== 'REŠENO'){
     <div class="flex items-center gap-2">
         <app-button class="flex-1" (click)="toggleChangeModal()">Izmeni status</app-button>
         <app-button class="flex-1" (click)="markAsResolved()">Oznaci kao reseno</app-button>

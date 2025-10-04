@@ -2,7 +2,7 @@
 <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-105">
     <app-card class="relative pointer-events-auto show-up opacity-0" (click)="$event.stopPropagation()">
         <ng-content></ng-content>
-        <div class="mt-4 min-w-md text-right">
+        <div class="mt-4 min-w-md text-right max-md:min-w-full">
             <app-button (click)="close()" class="table absolute top-1 right-1">
                 <lucide-angular [img]="X"></lucide-angular>
             </app-button>

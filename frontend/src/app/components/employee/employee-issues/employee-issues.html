@@ -2,7 +2,7 @@
 <div class="!my-4">
     <h2 class="">Prijavljeni kvarovi</h2>
     @if(issues.length > 0){
-    <ul class="grid grid-cols-3 gap-4">
+    <ul class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for(issue of issues; track issue.id){
         <app-single-issue [issue]="issue" [canChangeStatus]="true"></app-single-issue>
         }

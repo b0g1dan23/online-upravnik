@@ -42,8 +42,6 @@ export class RedirectionGuard implements CanActivate {
             case UserRoleEnum.EMPLOYEE:
                 this.router.navigate(['/employee']);
                 break;
-            default:
-                this.router.navigate(['/homepage']);
         }
     }
 }

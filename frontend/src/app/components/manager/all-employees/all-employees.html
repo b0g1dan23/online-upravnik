@@ -8,7 +8,7 @@
 
 @if (activeEmployees$ | async; as activeEmployees) {
 @if(activeEmployees.length > 0) {
-<ul class="grid grid-cols-3 gap-4">
+<ul class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
     @for (employee of activeEmployees; track employee.id) {
     <app-single-employee [employee]="employee" [showSelectedEmployee]="showSelectedEmployee"></app-single-employee>
     }
@@ -24,7 +24,7 @@
 
 @if (inactiveEmployees$ | async; as inactiveEmployees) {
 @if(inactiveEmployees.length > 0) {
-<ul class="grid grid-cols-3 gap-4">
+<ul class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
     @for (employee of inactiveEmployees; track employee.id) {
     <app-single-employee [employee]="employee" [showSelectedEmployee]="showSelectedEmployee"></app-single-employee>
     }
@@ -44,13 +44,13 @@
             class="hover:underline">{{selectedEmployee.phoneNumber}}</a></p>
     <p>Pozicija: {{selectedEmployee.position}}</p>
     <span>Dodeljeni kvarovi ({{selectedEmployee.issuesAssigned.length}}):</span>
-    <ul class="grid gap-2 grid-cols-3">
+    <ul class="grid gap-2 grid-cols-3 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for (issue of selectedEmployee.issuesAssigned; track issue.id) {
         <app-single-issue [issue]="issue"></app-single-issue>
         }
     </ul>
     <span>Zgrade kojima je dodeljen ({{selectedEmployee.buildings.length}}):</span>
-    <ul class="grid gap-2 grid-cols-3">
+    <ul class="grid gap-2 grid-cols-3 max-lg:grid-cols-2 max-md:grid-cols-1">
         @for (building of selectedEmployee.buildings; track building.id) {
         <app-single-building [building]="building"></app-single-building>
         }

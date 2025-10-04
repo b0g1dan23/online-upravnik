@@ -82,8 +82,8 @@ export class EmployeesService {
                 )
                 .addSelect(`
             CASE 
-                WHEN current_status.status = 'RESOLVED' THEN 2
-                WHEN current_status.status = 'CANCELLED' THEN 2
+                WHEN current_status.status = 'REŠENO' THEN 2
+                WHEN current_status.status = 'OTKAZANO' THEN 2
                 ELSE 1
             END
         `, 'status_order')
@@ -116,7 +116,7 @@ export class EmployeesService {
             .loadRelationCountAndMap('employee.openIssuesCount', 'employee.issuesAssigned', 'openIssues',
                 qb => qb.leftJoin('openIssues.statusHistory', 'openStatus')
                     .where('openStatus.status NOT IN (:...closedStatuses)', {
-                        closedStatuses: ['RESOLVED', 'CANCELLED']
+                        closedStatuses: ['REŠENO', 'OTKAZANO']
                     })
             )
             .getMany();

@@ -1,5 +1,5 @@
-<div class="h-[100vh] w-full grid items-center justify-center">
-  <app-card class="w-[500px]">
+<div class="h-[100vh] grid items-center justify-center !p-2">
+  <app-card class="w-[600px] max-sm:w-full !p-6">
     @if (!isRegisterMode) {
     <div>
       <div class="!mb-4">
@@ -40,7 +40,7 @@
         </p>
       </div>
       <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="grid gap-2">
-        <div class="flex gap-2">
+        <div class="flex gap-2 max-sm:flex-col">
           <div class="grid">
             <label for="reg-ime">Ime</label>
             <app-input type="text" id="reg-ime" placeholder="Unesite ime" formControlName="firstName"></app-input>

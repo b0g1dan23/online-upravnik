@@ -2,13 +2,13 @@ import { Building } from "src/buildings/buildings.entity";
 import type { Employee } from "src/employees/employees.entity";
 import { Notification } from "src/notifications/notifications.entity";
 import { User } from "src/users/users.entity";
-import { AfterUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export enum IssueStatusEnum {
-    REPORTED = 'REPORTED',
-    IN_PROGRESS = 'IN_PROGRESS',
-    RESOLVED = 'RESOLVED',
-    CANCELLED = 'CANCELLED'
+    REPORTED = 'PRIJAVLJENO',
+    IN_PROGRESS = 'U_TOKU',
+    RESOLVED = 'REŠENO',
+    CANCELLED = 'OTKAZANO'
 }
 
 export enum IssuePictureType {

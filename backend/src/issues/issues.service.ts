@@ -39,8 +39,8 @@ export class IssuesService {
             )
             .addSelect(`
             CASE 
-                WHEN current_status.status = 'RESOLVED' THEN 2
-                WHEN current_status.status = 'CANCELLED' THEN 2
+                WHEN current_status.status = 'REŠENO' THEN 2
+                WHEN current_status.status = 'OTKAZANO' THEN 2
                 ELSE 1
             END
         `, 'status_order')
@@ -78,8 +78,8 @@ export class IssuesService {
             )
             .addSelect(`
                 CASE 
-                    WHEN current_status.status = 'RESOLVED' THEN 2
-                    WHEN current_status.status = 'CANCELLED' THEN 2
+                    WHEN current_status.status = 'REŠENO' THEN 2
+                    WHEN current_status.status = 'OTKAZANO' THEN 2
                     ELSE 1
                 END
             `, 'status_order')
@@ -218,8 +218,8 @@ export class IssuesService {
             )
             .addSelect(`
             CASE 
-                WHEN current_status.status = 'RESOLVED' THEN 2
-                WHEN current_status.status = 'CANCELLED' THEN 2
+                WHEN current_status.status = 'REŠENO' THEN 2
+                WHEN current_status.status = 'OTKAZANO' THEN 2
                 ELSE 1
             END
         `, 'status_order')
