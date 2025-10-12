@@ -1,76 +1,76 @@
 # Online Upravnik 🏢
 
-Moderni sistem za upravljanje kvarovima u zgradama koje upravnik održava. Aplikacija omogućava stanarima da prijavljuju kvarove, upravniku da dodeljuje zaposlene za rešavanje problema, i prati ceo životni ciklus kvara od prijave do rešenja.
+Modern system for managing issues in buildings maintained by property managers. The application allows tenants to report issues, managers to assign employees to solve problems, and tracks the entire lifecycle of an issue from report to resolution.
 
-## 📋 Opis projekta
+## 📋 Project Description
 
-Online Upravnik je full-stack aplikacija koja digitalizuje proces upravljanja kvarovima u stambenim zgradama. Sistem omogućava:
+Online Upravnik is a full-stack application that digitizes the process of managing issues in residential buildings. The system enables:
 
-- **Stanarima** - prijavu kvarova, praćenje statusa, dodavanje fotografija problema (USKORO)
-- **Zaposlenima** - pregled dodeljenih kvarova, ažuriranje statusa, dodavanje fotografija rešenja (USKORO)
-- **Upravniku** - upravljanje zgradama, zaposlenima, dodela kvarova, pregled statistika
+- **Tenants** - report issues, track status, add problem photos (COMING SOON)
+- **Employees** - view assigned issues, update status, add solution photos (COMING SOON)
+- **Manager** - manage buildings and tenants, assign issues to employees, view statistics
 
-## 🏗️ Arhitektura
+## 🏗️ Architecture
 
-Projekat je organizovan kao **monorepo** sa sledećom strukturom:
+The project is organized as a **monorepo** with the following structure:
 
 ```
 online-upravnik/
 ├── backend/          # NestJS REST API
-├── frontend/         # Angular aplikacija
+├── frontend/         # Angular application
 └── README.md
 ```
 
 ### Backend (NestJS)
-- **Framework**: NestJS sa TypeScript
-- **Baza podataka**: PostgreSQL sa TypeORM
-- **Autentifikacija**: JWT sa Passport.js
-- **Validacija**: class-validator
-- **WebSocket**: RxJS Websockets za real-time notifikacije
+- **Framework**: NestJS with TypeScript
+- **Database**: PostgreSQL with TypeORM
+- **Authentication**: JWT with Passport.js
+- **Validation**: class-validator
+- **WebSocket**: RxJS Websockets for real-time notifications
 
 ### Frontend (Angular)
-- **Framework**: Angular 20+ sa TypeScript
+- **Framework**: Angular 20+ with TypeScript
 - **UI**: Angular Material + TailwindCSS
 - **State Management**: NgRx (Store, Effects)
-- **Routing**: Angular Router sa guard-ovima
-- **HTTP Client**: Angular HttpClient sa interceptor-ima
+- **Routing**: Angular Router with guards
+- **HTTP Client**: Angular HttpClient with interceptors
 
-## 🚀 Pokretanje projekta
+## 🚀 Running the Project
 
-### Preduslovi
-- **Docker** i **Docker Compose**
+### Prerequisites
+- **Docker** and **Docker Compose**
 - **Node.js** v20+
-- **Bun** package manager (opciono)
+- **Bun** package manager (optional)
 
-### Brzo pokretanje sa Docker Compose
+### Quick Start with Docker Compose
 
-1. **Kloniraj repository**
+1. **Clone the repository**
 ```bash
 git clone https://github.com/b0g1dan23/online-upravnik.git
 cd online-upravnik
 ```
 
-2. **Pokreni backend servise**
+2. **Start backend services**
 ```bash
 cd backend
 docker-compose up --build -d
 ```
 
-3. **Pokreni frontend**
+3. **Start frontend**
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-4. **Pristupi aplikaciji**
+4. **Access the application**
 - **Frontend**: http://localhost:4200
 - **Backend API**: http://localhost:8080
 - **PostgreSQL**: localhost:9999
 
-> **Napomena**: Backend mora biti pokrenut pre frontend-a jer frontend zavisi od backend API-ja.
+> **Note**: Backend must be running before frontend as the frontend depends on the backend API.
 
-### Manuelno pokretanje
+### Manual Start
 
 #### Backend
 ```bash
@@ -87,21 +87,21 @@ npm install
 npm start
 ```
 
-## 🗄️ Baza podataka
+## 🗄️ Database
 
-### Entiteti i relacije
+### Entities and Relations
 
 ```
-Users (stanari)
-├── Employee (zaposleni) - extends User
-├── Building (zgrade)
-├── Issue (kvarovi)
-├── IssueStatus (istorija statusa)
-├── IssuePicture (fotografije)
-└── Notification (obaveštenja)
+Users (tenants)
+├── Employee (employees) - extends User
+├── Building (buildings)
+├── Issue (issues)
+├── IssueStatus (status history)
+├── IssuePicture (photos)
+└── Notification (notifications)
 ```
 
-#### User (Korisnik)
+#### User
 ```typescript
 class User {
     id: string;
@@ -119,7 +119,7 @@ class User {
 }
 ```
 
-#### Issue (Kvar)
+#### Issue
 ```typescript
 class Issue {
     id: string;
@@ -136,37 +136,37 @@ class Issue {
 }
 ```
 
-## 🎯 Funkcionalnosti
+## 🎯 Features
 
-### 👤 Stanari (TENANT)
-- ✅ Registracija i prijava
-- ✅ Prijava novih kvarova
-- ✅ Prijava novih kvarova sa fotografijama (USKORO)
-- ✅ Real-time obaveštenja o promenama
+### 👤 Tenants (TENANT)
+- ✅ Registration and login
+- ✅ Report new issues
+- ✅ Report new issues with photos (COMING SOON)
+- ✅ Real-time notifications about changes
 
-### 🔧 Zaposleni (EMPLOYEE)
-- ✅ Pregled dodeljenih kvarova
-- ✅ Ažuriranje statusa kvarova
-- ✅ Dodavanje fotografija rešenja (USKORO)
-- ✅ Real-time obaveštenja o novim kvarovima
+### 🔧 Employees (EMPLOYEE)
+- ✅ View assigned issues
+- ✅ Update issue status
+- ✅ Add solution photos (COMING SOON)
+- ✅ Real-time notifications about new issues
 
-### 👨‍💼 Upravnik (MANAGER)
-- ✅ Upravljanje zgradama i stanarima
-- ✅ Upravljanje zaposlenima
-- ✅ Dodela kvarova zaposlenima
+### 👨‍💼 Manager (MANAGER)
+- ✅ Manage buildings and tenants
+- ✅ Manage employees
+- ✅ Assign issues to employees
 
-## 🔐 Autentifikacija i autorizacija
+## 🔐 Authentication and Authorization
 
-- **JWT tokeni** za sesiju korisnika
+- **JWT tokens** for user sessions
 - **Role-based access control** (RBAC)
-- **Route guards** na frontend-u
-- **Decorator-based authorization** na backend-u
+- **Route guards** on frontend
+- **Decorator-based authorization** on backend
 
-## 📡 Real-time komunikacija
+## 📡 Real-time Communication
 
-Aplikacija koristi **WebSocket** (RxJS Websockets) za:
-- 🔄 Live ažuriranje statusa kvarova
-- 🔄 Live prijavljivanje novog kvara
+The application uses **WebSocket** (RxJS Websockets) for:
+- 🔄 Live issue status updates
+- 🔄 Live new issue reporting
 
 ## 🚀 Deployment
 ```bash
@@ -178,11 +178,11 @@ npm run start:prod
 # Frontend
 cd frontend
 npm run build
-# Serve dist/ folder sa nginx/apache
+# Serve dist/ folder with nginx/apache
 ```
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
 **Bogdan** - [b0g1dan23](https://github.com/b0g1dan23)
 
-*Poslednje ažurirano: 12. oktobar 2025.*
+*Last updated: October 12, 2025.*
