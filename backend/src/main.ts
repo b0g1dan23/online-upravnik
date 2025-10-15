@@ -10,7 +10,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(new WsAdapter(app));
 
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: ['http://localhost:4200', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
